@@ -1,0 +1,106 @@
+import 'package:color_hug/main.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('主界面可以在光与颜料模式间切换', (tester) async {
+    tester.view.physicalSize = const Size(1024, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const ColorHugApp());
+    await tester.pump();
+
+    expect(find.text('颜色抱抱'), findsOneWidget);
+    expect(find.text('光'), findsOneWidget);
+    expect(find.text('颜料'), findsOneWidget);
+    expect(find.byIcon(Icons.refresh_rounded), findsOneWidget);
+
+    await tester.tap(find.text('颜料'));
+    await tester.pump(const Duration(milliseconds: 550));
+
+    expect(find.textContaining('小颜料们'), findsOneWidget);
+  });
+
+  testWidgets('iPhone 小屏布局没有溢出', (tester) async {
+    tester.view.physicalSize = const Size(390, 667);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const ColorHugApp());
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const ValueKey('color-playground')), findsOneWidget);
+    expect(find.text('光'), findsOneWidget);
+    expect(find.text('颜料'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const ValueKey('challenge-toggle')));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.textContaining('请抱出黄色的光'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('拖动红光与绿光可以完成抱抱混合', (tester) async {
+    tester.view.physicalSize = const Size(1024, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const ColorHugApp());
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final playground = find.byKey(const ValueKey('color-playground'));
+    final origin = tester.getTopLeft(playground);
+    final size = tester.getSize(playground);
+    final red = origin + Offset(size.width * 0.18, size.height * 0.48);
+    final green = origin + Offset(size.width * 0.41, size.height * 0.30);
+
+    await tester.dragFrom(red, green - red);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1100));
+
+    expect(find.textContaining('黄色的光'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('颜色小任务可以获得星星并进入下一关', (tester) async {
+    tester.view.physicalSize = const Size(1024, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const ColorHugApp());
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.byKey(const ValueKey('challenge-toggle')));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.textContaining('请抱出黄色的光'), findsOneWidget);
+    expect(find.text('⭐ 0'), findsOneWidget);
+
+    final playground = find.byKey(const ValueKey('color-playground'));
+    final origin = tester.getTopLeft(playground);
+    final size = tester.getSize(playground);
+    final red = origin + Offset(size.width * 0.28, size.height * 0.52);
+    final green = origin + Offset(size.width * 0.72, size.height * 0.52);
+
+    await tester.dragFrom(red, green - red);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1100));
+
+    expect(find.textContaining('太棒啦'), findsOneWidget);
+    expect(find.text('⭐ 1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('next-challenge')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('next-challenge')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.textContaining('请抱出紫色的光'), findsOneWidget);
+    expect(find.text('⭐ 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
