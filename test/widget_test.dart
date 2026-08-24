@@ -1,4 +1,6 @@
 import 'package:color_hug/main.dart';
+import 'package:color_hug/island_progress.dart';
+import 'package:color_hug/game_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,7 +11,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const ColorHugApp());
+    await tester.pumpWidget(
+      ColorHugApp(
+        progress: IslandProgress(),
+        audio: GameAudioController.silent(),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('颜色抱抱'), findsOneWidget);
@@ -29,7 +36,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const ColorHugApp());
+    await tester.pumpWidget(
+      ColorHugApp(
+        progress: IslandProgress(),
+        audio: GameAudioController.silent(),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const ValueKey('color-playground')), findsOneWidget);
@@ -50,7 +62,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const ColorHugApp());
+    await tester.pumpWidget(
+      ColorHugApp(
+        progress: IslandProgress(),
+        audio: GameAudioController.silent(),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 50));
 
     final playground = find.byKey(const ValueKey('color-playground'));
@@ -73,7 +90,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const ColorHugApp());
+    await tester.pumpWidget(
+      ColorHugApp(
+        progress: IslandProgress(),
+        audio: GameAudioController.silent(),
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 50));
     await tester.tap(find.byKey(const ValueKey('challenge-toggle')));
     await tester.pump(const Duration(milliseconds: 400));

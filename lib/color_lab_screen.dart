@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -6,9 +7,20 @@ import 'package:flutter/services.dart';
 
 import 'color_challenges.dart';
 import 'color_mixer.dart';
+import 'game_audio.dart';
+import 'island_progress.dart';
 
 class ColorLabScreen extends StatefulWidget {
-  const ColorLabScreen({super.key});
+  const ColorLabScreen({
+    super.key,
+    required this.audio,
+    this.progress,
+    this.onOpenIsland,
+  });
+
+  final GameAudioController audio;
+  final IslandProgress? progress;
+  final VoidCallback? onOpenIsland;
 
   @override
   State<ColorLabScreen> createState() => _ColorLabScreenState();
@@ -45,6 +57,14 @@ class _ColorLabScreenState extends State<ColorLabScreen>
   bool _challengeCompleted = false;
 
   bool get _isBusy => _activeMerge != null;
+  int get _visibleStars => widget.progress?.stars ?? _stars;
+  String get _voiceInstruction {
+    final challenge = _challenge;
+    if (challenge != null && !_challengeCompleted) {
+      return '${challenge.prompt}。拖动这两只颜色精灵，让它们抱在一起吧！';
+    }
+    return _message;
+  }
 
   @override
   void initState() {
@@ -84,10 +104,15 @@ class _ColorLabScreenState extends State<ColorLabScreen>
             setState(() => _reaction = null);
           }
         });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(widget.audio.speak('你好，我是彩虹精灵。拖动一只颜色精灵，靠近另一只，让它们抱一抱吧！'));
+    });
   }
 
   @override
   void dispose() {
+    unawaited(widget.audio.stopSpeech());
     _breathingController.dispose();
     _mergeController.dispose();
     _splitController.dispose();
@@ -208,6 +233,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
       _messageRevision++;
       _seedPlayground();
     });
+    unawaited(widget.audio.announce(_message, sound: GameSound.tap));
   }
 
   void _reset() {
@@ -222,6 +248,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
       _messageRevision++;
       _seedPlayground();
     });
+    unawaited(widget.audio.announce(_message, sound: GameSound.tap));
   }
 
   ColorChallenge _takeNextChallenge(MixMode mode) {
@@ -253,6 +280,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
       _messageRevision++;
       _seedPlayground();
     });
+    unawaited(widget.audio.announce(_voiceInstruction));
   }
 
   void _nextChallenge() {
@@ -266,6 +294,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
       _messageRevision++;
       _seedPlayground();
     });
+    unawaited(widget.audio.announce(_voiceInstruction));
   }
 
   void _addIngredient(ColorIngredient ingredient) {
@@ -276,6 +305,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
         _messageRevision++;
       });
       HapticFeedback.mediumImpact();
+      unawaited(widget.audio.announce(_message, sound: GameSound.wrong));
       return;
     }
 
@@ -301,6 +331,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
       _messageRevision++;
     });
     _splitController.forward(from: 0);
+    unawaited(widget.audio.play(GameSound.tap));
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -504,6 +535,8 @@ class _ColorLabScreenState extends State<ColorLabScreen>
         challenge != null &&
         !_challengeCompleted &&
         blob.name == challenge.target.name;
+    final newlyDiscovered = widget.progress?.discover(blob.name) ?? false;
+    if (challengeSuccess) widget.progress?.awardStar();
     setState(() {
       _activeMerge = null;
       _blobs.add(blob);
@@ -518,6 +551,9 @@ class _ColorLabScreenState extends State<ColorLabScreen>
         _message = _mode == MixMode.light
             ? '$firstName的光 + $secondName的光 = ${blob.name}的光！'
             : '$firstName颜料 + $secondName颜料 = ${blob.name}颜料！';
+        if (newlyDiscovered) {
+          _message = '$_message 📖 已收进色彩图鉴！';
+        }
       }
       _messageRevision++;
     });
@@ -530,6 +566,12 @@ class _ColorLabScreenState extends State<ColorLabScreen>
       emoji: challengeSuccess ? challenge.emoji : _surpriseEmojiFor(blob.name),
       big: challengeSuccess,
     );
+    final sound = challengeSuccess
+        ? GameSound.complete
+        : newlyDiscovered
+        ? GameSound.discover
+        : GameSound.correct;
+    unawaited(widget.audio.announce(_message, sound: sound));
   }
 
   void _startCelebration({
@@ -735,6 +777,34 @@ class _ColorLabScreenState extends State<ColorLabScreen>
           const Spacer(),
         _ModeSelector(mode: _mode, compact: compact, onChanged: _setMode),
         const SizedBox(width: 8),
+        AudioToggleButton(
+          audio: widget.audio,
+          foregroundColor: textColor,
+          backgroundColor: Colors.white.withValues(
+            alpha: _mode == MixMode.light ? 0.13 : 0.62,
+          ),
+        ),
+        SizedBox(width: compact ? 4 : 8),
+        if (widget.onOpenIsland != null) ...[
+          Semantics(
+            button: true,
+            label: '打开彩虹小岛',
+            child: IconButton.filledTonal(
+              key: const ValueKey('island-map'),
+              onPressed: _isBusy ? null : widget.onOpenIsland,
+              tooltip: '彩虹小岛',
+              iconSize: compact ? 21 : 25,
+              icon: const Icon(Icons.map_rounded),
+              style: IconButton.styleFrom(
+                foregroundColor: textColor,
+                backgroundColor: Colors.white.withValues(
+                  alpha: _mode == MixMode.light ? 0.13 : 0.62,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: compact ? 4 : 8),
+        ],
         Semantics(
           button: true,
           selected: _challenge != null,
@@ -810,12 +880,28 @@ class _ColorLabScreenState extends State<ColorLabScreen>
         ),
         alignment: Alignment.center,
         child: _challenge == null
-            ? Text(
-                _message,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: messageStyle,
+            ? Row(
+                children: [
+                  const Text('🌈', style: TextStyle(fontSize: 20)),
+                  SizedBox(width: compact ? 5 : 8),
+                  Expanded(
+                    child: Text(
+                      _message,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: messageStyle,
+                    ),
+                  ),
+                  RepeatVoiceButton(
+                    audio: widget.audio,
+                    text: _voiceInstruction,
+                    foregroundColor: messageStyle.color,
+                    backgroundColor: Colors.white.withValues(
+                      alpha: isLight ? 0.10 : 0.55,
+                    ),
+                  ),
+                ],
               )
             : Row(
                 children: [
@@ -868,6 +954,14 @@ class _ColorLabScreenState extends State<ColorLabScreen>
                       ],
                     ),
                   ),
+                  RepeatVoiceButton(
+                    audio: widget.audio,
+                    text: _voiceInstruction,
+                    foregroundColor: messageStyle.color,
+                    backgroundColor: Colors.white.withValues(
+                      alpha: isLight ? 0.10 : 0.55,
+                    ),
+                  ),
                   Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: compact ? 7 : 10,
@@ -878,7 +972,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Text(
-                      '⭐ $_stars',
+                      '⭐ $_visibleStars',
                       style: messageStyle.copyWith(fontSize: compact ? 12 : 14),
                     ),
                   ),
