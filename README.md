@@ -38,6 +38,8 @@
 
 ## 🖼️ 界面预览
 
+### 颜色实验室
+
 <table>
   <tr>
     <td width="50%" align="center">
@@ -50,6 +52,42 @@
   <tr>
     <td align="center"><strong>☀️ 光模式</strong><br><sub>拖动颜色精灵探索加色混合</sub></td>
     <td align="center"><strong>🎨 颜料模式</strong><br><sub>在温暖的画布上探索颜料混色</sub></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img width="72%" alt="颜色抱抱 macOS 颜色小任务" src="./docs/images/color-hug-challenge.png">
+  <br>
+  <strong>🚩 颜色小任务</strong><br>
+  <sub>跟随目标提示完成混色挑战，收集星星</sub>
+</p>
+
+### 彩虹小岛玩法
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img alt="颜色抱抱 macOS 色彩侦探" src="./docs/images/color-hug-detective.png">
+    </td>
+    <td width="50%" align="center">
+      <img alt="颜色抱抱 macOS 彩虹修复师" src="./docs/images/color-hug-repair.png">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>🔎 色彩侦探</strong><br><sub>听线索、观察物品，找出正确颜色</sub></td>
+    <td align="center"><strong>🌈 彩虹修复师</strong><br><sub>用颜色逐步唤醒太阳、河流与花园</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img alt="颜色抱抱 macOS 魔法画室" src="./docs/images/color-hug-studio.png">
+    </td>
+    <td width="50%" align="center">
+      <img alt="颜色抱抱 macOS 色彩图鉴" src="./docs/images/color-hug-gallery.png">
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><strong>🎨 魔法画室</strong><br><sub>挑选彩虹画笔，自由创作自己的作品</sub></td>
+    <td align="center"><strong>📖 色彩图鉴</strong><br><sub>点亮颜色卡片，聆听每种颜色的小秘密</sub></td>
   </tr>
 </table>
 
