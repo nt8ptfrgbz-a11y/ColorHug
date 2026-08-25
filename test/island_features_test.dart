@@ -24,6 +24,14 @@ Future<void> _openIsland(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 400));
 }
 
+Future<void> _openTrainingCamp(WidgetTester tester) async {
+  final target = find.byKey(const ValueKey('activity-guardian'));
+  await tester.ensureVisible(target);
+  await tester.tap(target);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
 void main() {
   testWidgets('彩虹小岛与全部新页面适配 iPhone 小屏', (tester) async {
     tester.view.physicalSize = const Size(390, 667);
@@ -44,6 +52,7 @@ void main() {
       'activity-repair',
       'activity-studio',
       'activity-gallery',
+      'activity-guardian',
     ]) {
       final target = find.byKey(ValueKey(activity));
       await tester.ensureVisible(target);
@@ -58,7 +67,42 @@ void main() {
     }
   });
 
-  testWidgets('彩虹小岛展示五个活动入口', (tester) async {
+  testWidgets('奥特曼训练营的五种玩法适配 iPhone 小屏', (tester) async {
+    tester.view.physicalSize = const Size(390, 667);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      ColorHugApp(
+        progress: IslandProgress(),
+        audio: GameAudioController.silent(),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+    await _openIsland(tester);
+    await _openTrainingCamp(tester);
+
+    for (final game in [
+      'ultra-game-monster-planet',
+      'ultra-game-radar',
+      'ultra-game-beam',
+      'ultra-game-rescue',
+      'ultra-game-guardian',
+    ]) {
+      final target = find.byKey(ValueKey(game));
+      await tester.ensureVisible(target);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(target);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 450));
+      expect(tester.takeException(), isNull, reason: game);
+      await tester.tap(find.byTooltip('返回奥特曼训练营'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+  });
+
+  testWidgets('彩虹小岛展示六个活动入口', (tester) async {
     await _pumpDesktopApp(tester);
     await _openIsland(tester);
 
@@ -68,6 +112,7 @@ void main() {
     expect(find.byKey(const ValueKey('activity-repair')), findsOneWidget);
     expect(find.byKey(const ValueKey('activity-studio')), findsOneWidget);
     expect(find.byKey(const ValueKey('activity-gallery')), findsOneWidget);
+    expect(find.byKey(const ValueKey('activity-guardian')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -158,11 +203,145 @@ void main() {
     expect(find.byKey(const ValueKey('gallery-progress')), findsOneWidget);
     expect(
       tester.widget<Text>(find.byKey(const ValueKey('gallery-progress'))).data,
-      '🎨 4/15',
+      '🎨 4/26',
     );
     expect(find.byKey(const ValueKey('gallery-color-红色')), findsOneWidget);
     expect(find.byKey(const ValueKey('gallery-color-紫色')), findsOneWidget);
     expect(find.text('等待发现'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('奥特曼训练营展示五种语音引导玩法', (tester) async {
+    await _pumpDesktopApp(tester);
+    await _openIsland(tester);
+    await _openTrainingCamp(tester);
+
+    expect(find.text('🚀 奥特曼训练营'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('ultra-game-monster-planet')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('ultra-game-radar')), findsOneWidget);
+    expect(find.byKey(const ValueKey('ultra-game-beam')), findsOneWidget);
+    expect(find.byKey(const ValueKey('ultra-game-rescue')), findsOneWidget);
+    expect(find.byKey(const ValueKey('ultra-game-guardian')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('怪兽星球可以选择三位英雄并进入实时战斗', (tester) async {
+    final audio = GameAudioController.silent();
+    tester.view.physicalSize = const Size(1024, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      ColorHugApp(progress: IslandProgress(), audio: audio),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+    await _openIsland(tester);
+    await _openTrainingCamp(tester);
+
+    final entry = find.byKey(const ValueKey('ultra-game-monster-planet'));
+    await tester.ensureVisible(entry);
+    await tester.tap(entry);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.byKey(const ValueKey('fighter-spark')), findsOneWidget);
+    expect(find.byKey(const ValueKey('fighter-gale')), findsOneWidget);
+    expect(find.byKey(const ValueKey('fighter-nova')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('fighter-gale')));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(audio.lastSpokenText, contains('疾风战士'));
+
+    await tester.tap(find.byKey(const ValueKey('monster-planet-start')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+
+    expect(find.byKey(const ValueKey('monster-planet-game')), findsOneWidget);
+    expect(find.text('疾风战士'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('怪兽雷达根据语音特征找到目标', (tester) async {
+    await _pumpDesktopApp(tester);
+    await _openIsland(tester);
+    await _openTrainingCamp(tester);
+    await tester.tap(find.byKey(const ValueKey('ultra-game-radar')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.byKey(const ValueKey('radar-monster-1')));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.textContaining('特征不一样'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('radar-monster-0')));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.textContaining('雷达锁定成功'), findsOneWidget);
+    expect(find.byKey(const ValueKey('radar-next')), findsOneWidget);
+    expect(find.textContaining('⭐ 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('宇宙救援会对工具选择给出语音反馈', (tester) async {
+    await _pumpDesktopApp(tester);
+    await _openIsland(tester);
+    await _openTrainingCamp(tester);
+    await tester.tap(find.byKey(const ValueKey('ultra-game-rescue')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.byKey(const ValueKey('rescue-tool-snack')));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.textContaining('帮不上忙'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('rescue-tool-rope')));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.textContaining('救援成功'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rescue-next')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('光线发射在能量球进入目标时完成训练', (tester) async {
+    await _pumpDesktopApp(tester);
+    await _openIsland(tester);
+    await _openTrainingCamp(tester);
+    await tester.tap(find.byKey(const ValueKey('ultra-game-beam')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    for (var attempt = 0; attempt < 24; attempt++) {
+      if (find.byKey(const ValueKey('beam-next')).evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 70));
+      await tester.tap(find.byKey(const ValueKey('beam-launch')));
+      await tester.pump();
+    }
+
+    expect(find.textContaining('奥特光线发射成功'), findsOneWidget);
+    expect(find.byKey(const ValueKey('beam-next')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('奥特曼能量护盾使用互补色完成任务', (tester) async {
+    await _pumpDesktopApp(tester);
+    await _openIsland(tester);
+    await _openTrainingCamp(tester);
+    await tester.tap(find.byKey(const ValueKey('ultra-game-guardian')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('⚡ 奥特曼·能量护盾'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('guardian-energy-蓝色')));
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(find.textContaining('还没有平衡护盾'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('guardian-energy-青色')));
+    await tester.pump(const Duration(milliseconds: 1000));
+
+    expect(find.textContaining('能量平衡成功'), findsOneWidget);
+    expect(find.byKey(const ValueKey('guardian-next')), findsOneWidget);
+    expect(find.textContaining('⭐ 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

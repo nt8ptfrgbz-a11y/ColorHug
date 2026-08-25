@@ -153,12 +153,16 @@ class _ColorLabScreenState extends State<ColorLabScreen>
     final compact = _canvasSize.width < 560;
     final radius = _blobRadius;
     final seeds = compact
-        ? [paletteIngredients[0], paletteIngredients[3], paletteIngredients[1]]
+        ? [
+            ingredientForSeed(ColorSeed.red),
+            ingredientForSeed(ColorSeed.green),
+            ingredientForSeed(ColorSeed.blue),
+          ]
         : [
-            paletteIngredients[0],
-            paletteIngredients[3],
-            paletteIngredients[1],
-            paletteIngredients[2],
+            ingredientForSeed(ColorSeed.red),
+            ingredientForSeed(ColorSeed.green),
+            ingredientForSeed(ColorSeed.blue),
+            ingredientForSeed(ColorSeed.yellow),
           ];
     final fractions = compact
         ? const [Offset(0.24, 0.32), Offset(0.73, 0.30), Offset(0.48, 0.70)]
@@ -188,10 +192,11 @@ class _ColorLabScreenState extends State<ColorLabScreen>
 
   void _seedChallenge(ColorChallenge challenge) {
     final radius = _blobRadius;
-    final ingredients = challenge.ingredients;
+    final ingredients = challenge.playgroundIngredients;
     final positions = [
-      Offset(_canvasSize.width * 0.28, _canvasSize.height * 0.52),
-      Offset(_canvasSize.width * 0.72, _canvasSize.height * 0.52),
+      Offset(_canvasSize.width * 0.24, _canvasSize.height * 0.60),
+      Offset(_canvasSize.width * 0.76, _canvasSize.height * 0.60),
+      Offset(_canvasSize.width * 0.50, _canvasSize.height * 0.27),
     ];
     for (var index = 0; index < ingredients.length; index++) {
       final ingredient = ingredients[index];
@@ -295,6 +300,23 @@ class _ColorLabScreenState extends State<ColorLabScreen>
       _seedPlayground();
     });
     unawaited(widget.audio.announce(_voiceInstruction));
+  }
+
+  Future<void> _openColorPanel() async {
+    if (_isBusy) return;
+    unawaited(widget.audio.speak('这里有二十四种颜色。点击喜欢的颜色，就能叫来新的颜色精灵。'));
+    final selected = await showModalBottomSheet<ColorIngredient>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ColorPanel(
+        mode: _mode,
+        audio: widget.audio,
+        onSelected: (ingredient) => Navigator.of(context).pop(ingredient),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    _addIngredient(selected);
   }
 
   void _addIngredient(ColorIngredient ingredient) {
@@ -536,21 +558,29 @@ class _ColorLabScreenState extends State<ColorLabScreen>
         !_challengeCompleted &&
         blob.name == challenge.target.name;
     final newlyDiscovered = widget.progress?.discover(blob.name) ?? false;
-    if (challengeSuccess) widget.progress?.awardStar();
+    final earnedChallengeStar = challengeSuccess
+        ? widget.progress?.recordColorChallenge(challenge.number, blob.name)
+        : false;
     setState(() {
       _activeMerge = null;
       _blobs.add(blob);
       _splittingIds = {blob.id};
       if (challengeSuccess) {
         _challengeCompleted = true;
-        _stars++;
-        _message = '太棒啦！${challenge.emoji} ${challenge.surpriseName}来做客了！';
+        if (widget.progress == null && earnedChallengeStar != false) _stars++;
+        _message = earnedChallengeStar == false
+            ? '又成功啦！${challenge.emoji} 这一关已经收藏过了'
+            : '太棒啦！${challenge.emoji} ${challenge.surpriseName}来做客了！';
       } else if (challenge != null) {
         _message = '差一点点！点一下${blob.name}拆开，再试一次';
       } else {
         _message = _mode == MixMode.light
             ? '$firstName的光 + $secondName的光 = ${blob.name}的光！'
             : '$firstName颜料 + $secondName颜料 = ${blob.name}颜料！';
+        if (_mode == MixMode.light &&
+            merge.ingredients.any((item) => item.seed == ColorSeed.white)) {
+          _message = '$_message 白光已经包含所有颜色，所以叠加后还是白光。';
+        }
         if (newlyDiscovered) {
           _message = '$_message 📖 已收进色彩图鉴！';
         }
@@ -938,7 +968,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '🎯 颜色小任务',
+                          '🎯 第 ${_challenge!.number}/$colorChallengeTotal 关 · ${_challenge!.difficulty}',
                           style: TextStyle(
                             color: messageStyle.color?.withValues(alpha: 0.72),
                             fontSize: compact ? 10 : 11,
@@ -1071,6 +1101,9 @@ class _ColorLabScreenState extends State<ColorLabScreen>
   Widget _buildPalette(bool compact) {
     final isLight = _mode == MixMode.light;
     final textColor = isLight ? Colors.white : const Color(0xFF624A3C);
+    final quickIngredients = quickPaletteSeeds
+        .map(ingredientForSeed)
+        .toList(growable: false);
     return Container(
       height: compact ? 88 : 112,
       padding: EdgeInsets.fromLTRB(compact ? 10 : 14, 8, compact ? 10 : 14, 8),
@@ -1109,13 +1142,25 @@ class _ColorLabScreenState extends State<ColorLabScreen>
             ),
             const SizedBox(width: 10),
           ],
+          _PaletteLauncher(
+            compact: compact,
+            darkBackground: isLight,
+            onPressed: _openColorPanel,
+          ),
+          SizedBox(width: compact ? 8 : 12),
+          Container(
+            width: 1,
+            height: 58,
+            color: textColor.withValues(alpha: 0.18),
+          ),
+          SizedBox(width: compact ? 8 : 12),
           Expanded(
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: paletteIngredients.length,
+              itemCount: quickIngredients.length,
               separatorBuilder: (_, _) => SizedBox(width: compact ? 8 : 12),
               itemBuilder: (context, index) {
-                final ingredient = paletteIngredients[index];
+                final ingredient = quickIngredients[index];
                 return _PaletteButton(
                   ingredient: ingredient,
                   compact: compact,
@@ -1243,6 +1288,259 @@ class _ModeButton extends StatelessWidget {
                   ),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PaletteLauncher extends StatelessWidget {
+  const _PaletteLauncher({
+    required this.compact,
+    required this.darkBackground,
+    required this.onPressed,
+  });
+
+  final bool compact;
+  final bool darkBackground;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = darkBackground ? Colors.white : const Color(0xFF624A3C);
+    return Semantics(
+      button: true,
+      label: '打开全部颜色面板',
+      child: InkWell(
+        key: const ValueKey('open-color-panel'),
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          width: compact ? 52 : 68,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: compact ? 43 : 50,
+                height: compact ? 43 : 50,
+                decoration: BoxDecoration(
+                  gradient: const SweepGradient(
+                    colors: [
+                      Color(0xFFFF4F64),
+                      Color(0xFFFFD84A),
+                      Color(0xFF45CE75),
+                      Color(0xFF42D7D0),
+                      Color(0xFF4687FF),
+                      Color(0xFF9B67E8),
+                      Color(0xFFFF4F64),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.palette_rounded,
+                  color: Colors.white,
+                  size: 23,
+                ),
+              ),
+              if (!compact) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '全部颜色',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorPanel extends StatelessWidget {
+  const _ColorPanel({
+    required this.mode,
+    required this.audio,
+    required this.onSelected,
+  });
+
+  final MixMode mode;
+  final GameAudioController audio;
+  final ValueChanged<ColorIngredient> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = mode == MixMode.light;
+    final background = dark ? const Color(0xFF171A3B) : const Color(0xFFFFF7E8);
+    final textColor = dark ? Colors.white : const Color(0xFF55413A);
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.82,
+      child: Container(
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+            child: Column(
+              children: [
+                Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: textColor.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Text('🎨', style: TextStyle(fontSize: 30)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '颜色精灵面板',
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 21,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            '点击喜欢的颜色，把它叫到游戏里',
+                            style: TextStyle(
+                              color: textColor.withValues(alpha: 0.68),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    RepeatVoiceButton(
+                      audio: audio,
+                      text: '这里有二十四种颜色。点击喜欢的颜色，就能叫来新的颜色精灵。',
+                      foregroundColor: textColor,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = constraints.maxWidth >= 720
+                          ? 8
+                          : constraints.maxWidth >= 500
+                          ? 6
+                          : 4;
+                      return GridView.builder(
+                        padding: EdgeInsets.zero,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: constraints.maxWidth >= 500
+                              ? 1.20
+                              : 0.92,
+                        ),
+                        itemCount: paletteIngredients.length,
+                        itemBuilder: (context, index) {
+                          final ingredient = paletteIngredients[index];
+                          return _ColorPanelTile(
+                            ingredient: ingredient,
+                            darkBackground: dark,
+                            onTap: () => onSelected(ingredient),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorPanelTile extends StatelessWidget {
+  const _ColorPanelTile({
+    required this.ingredient,
+    required this.darkBackground,
+    required this.onTap,
+  });
+
+  final ColorIngredient ingredient;
+  final bool darkBackground;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = darkBackground ? Colors.white : const Color(0xFF594A4D);
+    return Semantics(
+      button: true,
+      label: '选择${ingredient.name}',
+      child: InkWell(
+        key: ValueKey('panel-color-${ingredient.name}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: darkBackground
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: ingredient.color.withValues(alpha: 0.45),
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: ingredient.color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ingredient.color.withValues(alpha: 0.34),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                ingredient.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ),

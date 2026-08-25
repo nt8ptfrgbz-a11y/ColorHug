@@ -161,6 +161,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.1.1"
+  flame:
+    dependency: "direct main"
+    description:
+      name: flame
+      sha256: c918f8d0e340cbc5e3b20603bd5dc0bac6d939133fed4044366180081a63561d
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.38.0"
+  flame_audio:
+    dependency: "direct main"
+    description:
+      name: flame_audio
+      sha256: f88692222444231cdb380af8ca087b521da26773c1bb4d1da33a24c953d3b3ea
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.12.2"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -312,6 +328,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "9.5.0"
+  ordered_set:
+    dependency: transitive
+    description:
+      name: ordered_set
+      sha256: ca415a0e28b8e8f5e284af4b7d1b189d2d09af6d2082532ddaec54473f67d226
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "8.0.1"
   package_config:
     dependency: transitive
     description:

@@ -52,7 +52,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('challenge-toggle')));
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.textContaining('请抱出黄色的光'), findsOneWidget);
+    expect(find.textContaining('黄色的能量光'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -100,14 +100,14 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('challenge-toggle')));
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.textContaining('请抱出黄色的光'), findsOneWidget);
+    expect(find.textContaining('黄色的能量光'), findsOneWidget);
     expect(find.text('⭐ 0'), findsOneWidget);
 
     final playground = find.byKey(const ValueKey('color-playground'));
     final origin = tester.getTopLeft(playground);
     final size = tester.getSize(playground);
-    final red = origin + Offset(size.width * 0.28, size.height * 0.52);
-    final green = origin + Offset(size.width * 0.72, size.height * 0.52);
+    final red = origin + Offset(size.width * 0.24, size.height * 0.60);
+    final green = origin + Offset(size.width * 0.76, size.height * 0.60);
 
     await tester.dragFrom(red, green - red);
     await tester.pump();
@@ -121,8 +121,39 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.textContaining('请抱出紫色的光'), findsOneWidget);
+    expect(find.textContaining('紫色的能量光'), findsOneWidget);
     expect(find.text('⭐ 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('颜色面板可以选择二十四种颜色精灵', (tester) async {
+    tester.view.physicalSize = const Size(1024, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ColorHugApp(
+        progress: IslandProgress(),
+        audio: GameAudioController.silent(),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+    await tester.tap(find.byKey(const ValueKey('open-color-panel')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('颜色精灵面板'), findsOneWidget);
+    expect(find.byKey(const ValueKey('panel-color-珊瑚色')), findsOneWidget);
+    expect(find.byKey(const ValueKey('panel-color-薰衣草色')), findsOneWidget);
+
+    final coral = find.byKey(const ValueKey('panel-color-珊瑚色'));
+    await tester.ensureVisible(coral);
+    await tester.pump();
+    await tester.tap(coral);
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.textContaining('珊瑚色小精灵来啦'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

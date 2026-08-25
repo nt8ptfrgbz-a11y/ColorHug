@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'color_challenges.dart';
 import 'color_detective_screen.dart';
 import 'color_gallery_screen.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
 import 'magic_studio_screen.dart';
 import 'rainbow_repair_screen.dart';
+import 'ultraman_training_camp_screen.dart';
 
 class RainbowIslandScreen extends StatelessWidget {
   const RainbowIslandScreen({
@@ -74,7 +76,8 @@ class RainbowIslandScreen extends StatelessWidget {
                                       icon: '🧪',
                                       title: '颜色实验室',
                                       subtitle: '让颜色精灵抱一抱，发现新的颜色',
-                                      badge: '自由探索',
+                                      badge:
+                                          '${progress.completedColorChallenges}/$colorChallengeTotal 关',
                                       colors: const [
                                         Color(0xFF3A2A78),
                                         Color(0xFF1B4F80),
@@ -156,6 +159,26 @@ class RainbowIslandScreen extends StatelessWidget {
                                       onTap: () => _open(
                                         context,
                                         ColorGalleryScreen(
+                                          progress: progress,
+                                          audio: audio,
+                                        ),
+                                      ),
+                                    ),
+                                    _ActivityCard(
+                                      key: const ValueKey('activity-guardian'),
+                                      width: cardWidth,
+                                      icon: '🦸',
+                                      title: '奥特曼训练营',
+                                      subtitle: '摇杆战斗、怪兽雷达、光线发射等五种玩法',
+                                      badge:
+                                          '${progress.monsterPlanetWins + progress.monsterRadarWins + progress.beamTrainingWins + progress.spaceRescueWins + progress.guardianWins}/31 任务',
+                                      colors: const [
+                                        Color(0xFF3446A8),
+                                        Color(0xFFE54E8B),
+                                      ],
+                                      onTap: () => _open(
+                                        context,
+                                        UltramanTrainingCampScreen(
                                           progress: progress,
                                           audio: audio,
                                         ),
