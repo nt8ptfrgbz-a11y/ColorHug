@@ -8,11 +8,13 @@ import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/text.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'game_audio.dart';
 import 'island_progress.dart';
+import 'monster_planet_3d_screen.dart';
 import 'ultra_assets.dart';
 
 @immutable
@@ -124,15 +126,23 @@ class _MonsterPlanetSelectScreenState extends State<MonsterPlanetSelectScreen> {
 
   void _start() {
     unawaited(widget.audio.play(GameSound.correct));
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => MonsterPlanetBattleScreen(
-          progress: widget.progress,
-          audio: widget.audio,
-          fighter: _selected,
-        ),
-      ),
-    );
+    final destination = defaultTargetPlatform == TargetPlatform.iOS
+        ? MonsterPlanet3DGameScreen(
+            progress: widget.progress,
+            audio: widget.audio,
+            fighterIndex: _selectedIndex,
+            fighterId: _selected.id,
+            fighterName: _selected.name,
+            fighterColor: _selected.color,
+          )
+        : MonsterPlanetBattleScreen(
+            progress: widget.progress,
+            audio: widget.audio,
+            fighter: _selected,
+          );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => destination));
   }
 
   @override

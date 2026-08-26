@@ -40,6 +40,7 @@
 - **自动保存成长**：星星、图鉴、修复进度和作品数量会保存在本机，下次打开可以继续。
 - **充满即时反馈**：磁吸、呼吸动画、表情、触觉和庆祝效果，让每次探索都有回应。
 - **一套代码，多种屏幕**：界面会适配 macOS、iPad 与 iPhone 的不同尺寸。
+- **APP 内嵌 3D 战斗**：iPhone 版会从“怪兽星球”入口直接打开 Unity 6.3 全屏战斗，包含三位可选战士、蒙皮动画、连击、闪避、怪兽预警、光线技能、音效和手机手柄；退出后会回到原来的 Flutter 训练营。
 
 ## 🖼️ 界面预览
 
@@ -178,12 +179,30 @@ flutter run -d macos
 
 ### 在 iPhone 或 iPad 上运行
 
-先启动相应的模拟器，再选择设备运行：
+连接已解锁并开启开发者模式的真机，然后选择设备运行：
 
 ```bash
 flutter devices
 flutter run -d <device-id>
 ```
+
+> Unity 3D 怪兽星球使用真机版 `UnityFramework`，不走 iOS 模拟器；macOS 和其他平台仍保留原有的 Flame 2D 战斗作为兼容玩法。
+
+### 更新 3D 怪兽星球
+
+平时运行 Flutter APP 不需要打开 Unity。只有修改了 `MonsterPlanet3D` 的场景、角色、脚本或素材后，才需要重新生成 iOS 游戏库：
+
+1. 在 Unity Hub 的 **Installs** 中给 Unity 6.3.22f1 安装 **iOS Build Support**。
+2. 执行一键导出脚本，然后重新运行 Flutter APP。
+
+```bash
+./scripts/export_unity_ios.sh
+flutter run -d <device-id>
+```
+
+若只想在 Unity 编辑器预览，可打开 `MonsterPlanet3D`；项目会自动进入 `MonsterPlanetPrototype` 场景，直接点击 Play。Mac 上可用 `WASD` 移动、`Space` 跳跃、`J` 连击、`K` 闪避、`L` 光线技能。手机端使用左侧摇杆和右侧技能按钮，普通话语音会提示关键步骤。
+
+3D 游戏使用经过挑选的 CC0 蒙皮模型，资源源码约 7 MB；约 1.9 GB 的 `MonsterPlanet3D/Library` 缓存和约 595 MB 的 `ios/unityLibrary` 导出目录都已忽略，不会提交到 Git。更多说明与素材来源见 [`MonsterPlanet3D/README.md`](MonsterPlanet3D/README.md) 和 [`MonsterPlanet3D/ATTRIBUTIONS.md`](MonsterPlanet3D/ATTRIBUTIONS.md)。
 
 ## ✅ 验证
 
@@ -191,7 +210,7 @@ flutter run -d <device-id>
 flutter analyze
 flutter test
 flutter build macos
-flutter build ios --simulator
+flutter build ios --debug --no-codesign
 ```
 
 ## 🗂️ 项目结构
@@ -206,7 +225,8 @@ lib/
 ├── magic_studio_screen.dart     # 自由绘画画室
 ├── color_gallery_screen.dart    # 色彩图鉴
 ├── ultraman_training_camp_screen.dart # 奥特曼训练营与五种玩法入口
-├── monster_planet_game.dart     # Flame 实时战斗、三英雄与怪兽 AI
+├── monster_planet_game.dart     # 角色选择与非 iOS 的 Flame 2D 兼容战斗
+├── monster_planet_3d_screen.dart # iPhone 全屏 Unity 3D 容器与消息桥
 ├── light_guardian_screen.dart   # 奥特曼互补色能量护盾
 ├── ultra_assets.dart            # 奥特曼图片素材组件
 ├── game_audio.dart              # 中文语音、音效与声音开关
@@ -225,6 +245,9 @@ test/
 
 assets/audio/                    # 提示音与拳击、跳跃、受击、光线战斗音效
 assets/ultra/                    # 离线角色、怪兽、星球背景、技能特效与救援素材
+
+MonsterPlanet3D/                # 内嵌 iPhone APP 的 Unity 6.3 URP 3D 游戏源码
+scripts/                        # Unity iOS 一键导出与 Xcode 自动链接脚本
 ```
 
 ## 🎨 素材说明

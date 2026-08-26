@@ -39,6 +39,7 @@ dependencies:
   shared_preferences: ^2.5.5
   flame: ^1.38.0
   flame_audio: ^2.12.2
+  flutter_embed_unity: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +57,11 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # Unity as a Library is linked through CocoaPods so the plugin and the
+  # generated UnityFramework are resolved in the same native build.
+  config:
+    enable-swift-package-manager: false
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

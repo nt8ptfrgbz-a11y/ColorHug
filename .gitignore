@@ -33,6 +33,19 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Unity 3D prototype (keep source and project settings, ignore generated caches)
+/MonsterPlanet3D/[Ll]ibrary/
+/MonsterPlanet3D/[Tt]emp/
+/MonsterPlanet3D/[Oo]bj/
+/MonsterPlanet3D/[Bb]uild/
+/MonsterPlanet3D/[Bb]uilds/
+/MonsterPlanet3D/[Ll]ogs/
+/MonsterPlanet3D/[Uu]ser[Ss]ettings/
+/MonsterPlanet3D/[Mm]emoryCaptures/
+/MonsterPlanet3D/[Rr]ecordings/
+# Generated Unity as a Library export/prebuilt framework for the iOS app.
+/ios/unityLibrary/
+
 # Symbolication related
 app.*.symbols
 
