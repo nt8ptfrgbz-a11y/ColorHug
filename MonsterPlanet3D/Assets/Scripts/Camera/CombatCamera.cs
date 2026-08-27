@@ -8,9 +8,9 @@ namespace MonsterPlanet3D.CameraSystem
     {
         [SerializeField] private Transform follow;
         [SerializeField] private Transform target;
-        [SerializeField] private float distance = 8.6f;
-        [SerializeField] private float height = 4.4f;
-        [SerializeField] private float shoulderOffset = 1.15f;
+        [SerializeField] private float distance = 7.45f;
+        [SerializeField] private float height = 3.85f;
+        [SerializeField] private float shoulderOffset = 0.92f;
         [SerializeField] private float followSmoothTime = 0.12f;
         [SerializeField] private float rotationSharpness = 8f;
         [SerializeField] private LayerMask collisionMask = 0;
@@ -55,8 +55,8 @@ namespace MonsterPlanet3D.CameraSystem
 
             var right = Vector3.Cross(Vector3.up, combatDirection).normalized;
             var framing = Mathf.InverseLerp(3f, 13f, combatDistance);
-            var dynamicDistance = distance + Mathf.Lerp(-1.25f, 1.15f, framing);
-            var dynamicHeight = height + Mathf.Lerp(-0.45f, 0.5f, framing);
+            var dynamicDistance = distance + Mathf.Lerp(-1.15f, 0.82f, framing);
+            var dynamicHeight = height + Mathf.Lerp(-0.38f, 0.36f, framing);
             var desiredPosition = focus - combatDirection * dynamicDistance + Vector3.up * dynamicHeight + right * shoulderOffset;
             var rayDirection = desiredPosition - focus;
             var hitCount = collisionMask.value == 0

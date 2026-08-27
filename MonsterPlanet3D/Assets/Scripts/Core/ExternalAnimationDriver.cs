@@ -1,4 +1,5 @@
 using UnityEngine;
+using MonsterPlanet3D.Player;
 
 namespace MonsterPlanet3D.Core
 {
@@ -12,6 +13,7 @@ namespace MonsterPlanet3D.Core
         [SerializeField] private string skillState = "Weapon";
         [SerializeField] private string hitState = "HitReact";
         [SerializeField] private string deathState = "Death";
+        [SerializeField] private GuardianPoseAnimator guardianPose;
 
         private string _currentState;
         private float _actionLockedUntil;
@@ -37,23 +39,51 @@ namespace MonsterPlanet3D.Core
             skillState = skill;
             hitState = hit;
             deathState = death;
+            guardianPose = GetComponent<GuardianPoseAnimator>();
         }
 
         public void SetLocomotion(float speed, bool grounded)
         {
             _speed = speed;
             _grounded = grounded;
+            guardianPose?.SetLocomotion(speed, grounded);
         }
 
-        public void PlayJump() => PlayAction(jumpState, 0.55f, 0.06f);
-        public void PlayAttack(int combo) => PlayAction(attackState, combo == 3 ? 0.72f : 0.46f, 0.045f);
-        public void PlayDodge(float duration) => PlayAction(moveState, duration, 0.03f, 1.65f);
-        public void PlaySkill(float duration) => PlayAction(skillState, duration, 0.06f);
-        public void PlayHit() => PlayAction(hitState, 0.32f, 0.025f);
+        public void PlayJump()
+        {
+            guardianPose?.PlayJump(0.55f);
+            PlayAction(jumpState, 0.55f, 0.06f);
+        }
+
+        public void PlayAttack(int combo)
+        {
+            var duration = combo == 3 ? 0.72f : 0.46f;
+            guardianPose?.PlayAttack(combo, duration);
+            PlayAction(attackState, duration, 0.045f);
+        }
+
+        public void PlayDodge(float duration)
+        {
+            guardianPose?.PlayDodge(duration);
+            PlayAction(moveState, duration, 0.03f, 1.65f);
+        }
+
+        public void PlaySkill(float duration)
+        {
+            guardianPose?.PlaySkill(duration);
+            PlayAction(skillState, duration, 0.06f);
+        }
+
+        public void PlayHit()
+        {
+            guardianPose?.PlayHit(0.32f);
+            PlayAction(hitState, 0.32f, 0.025f);
+        }
 
         public void PlayDefeat()
         {
             _defeated = true;
+            guardianPose?.PlayDefeat();
             PlayState(deathState, 0.12f, 1f);
         }
 

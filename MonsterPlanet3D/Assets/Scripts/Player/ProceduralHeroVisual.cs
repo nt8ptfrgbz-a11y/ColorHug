@@ -162,6 +162,11 @@ namespace MonsterPlanet3D.Player
             for (var rendererIndex = 0; rendererIndex < renderersToTint.Length; rendererIndex++)
             {
                 var targetRenderer = renderersToTint[rendererIndex];
+                if (!targetRenderer.enabled)
+                {
+                    continue;
+                }
+
                 var materials = targetRenderer.sharedMaterials;
                 for (var materialIndex = 0; materialIndex < materials.Length; materialIndex++)
                 {
@@ -171,39 +176,34 @@ namespace MonsterPlanet3D.Player
                         continue;
                     }
 
-                    var alternating = (rendererIndex + materialIndex) % 3;
-                    var tint = alternating == 0
-                        ? Color.Lerp(accentColor, primaryColor, 0.42f)
-                        : (alternating == 1
-                            ? Color.Lerp(Color.white, accentColor, 0.56f)
-                            : Color.Lerp(primaryColor, Color.white, 0.28f));
-                    if (_selectedExternalModel == 1)
-                    {
-                        tint = Color.Lerp(tint, new Color(0.18f, 0.34f, 1f), 0.24f);
-                    }
-                    else if (_selectedExternalModel == 2)
-                    {
-                        tint = Color.Lerp(tint, new Color(1f, 0.18f, 0.035f), 0.18f);
-                    }
-
                     var rendererName = targetRenderer.gameObject.name;
-                    var isLightPart = rendererName.StartsWith("Light ");
+                    var isLightPart = rendererName.StartsWith("Light ", System.StringComparison.Ordinal);
                     var isGlowPart = rendererName.Contains("Eye") || rendererName.Contains("Core");
-                    if (rendererName.Contains("Helmet"))
+                    var tint = new Color(0.4f, 0.45f, 0.53f);
+                    if (isGlowPart)
                     {
-                        tint = Color.Lerp(Color.white, accentColor, 0.18f);
+                        tint = Color.Lerp(primaryColor, Color.white, 0.38f);
                     }
-                    else if (isLightPart)
+                    else if (isLightPart && !rendererName.Contains("Helmet"))
                     {
-                        tint = isGlowPart ? Color.Lerp(primaryColor, Color.white, 0.42f) : primaryColor;
+                        tint = primaryColor;
+                    }
+                    else if (rendererName.Contains("Helmet"))
+                    {
+                        tint = new Color(0.5f, 0.56f, 0.65f);
                     }
 
                     _materialProperties ??= new MaterialPropertyBlock();
                     targetRenderer.GetPropertyBlock(_materialProperties, materialIndex);
                     if (material.HasProperty(BaseColorId)) _materialProperties.SetColor(BaseColorId, tint);
                     if (material.HasProperty(LegacyColorId)) _materialProperties.SetColor(LegacyColorId, tint);
-                    if (material.HasProperty(RimColorId)) _materialProperties.SetColor(RimColorId, Color.Lerp(primaryColor, Color.white, 0.32f));
-                    if (material.HasProperty(EmissionColorId)) _materialProperties.SetColor(EmissionColorId, isGlowPart ? primaryColor * 4.2f : primaryColor * 0.28f);
+                    if (material.HasProperty(RimColorId)) _materialProperties.SetColor(RimColorId, Color.Lerp(primaryColor, Color.white, 0.2f));
+                    if (material.HasProperty(EmissionColorId))
+                    {
+                        _materialProperties.SetColor(
+                            EmissionColorId,
+                            isGlowPart ? primaryColor * 3.2f : (isLightPart ? primaryColor * 0.08f : Color.black));
+                    }
                     targetRenderer.SetPropertyBlock(_materialProperties, materialIndex);
                     _materialProperties.Clear();
                 }

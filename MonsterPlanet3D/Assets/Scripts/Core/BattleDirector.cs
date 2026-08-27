@@ -87,6 +87,7 @@ namespace MonsterPlanet3D.Core
                     break;
             }
 
+            hero.ConfigureHeroStyle(index);
             heroVisual.SelectExternalModel(index);
             hero.PrepareForBattle();
 

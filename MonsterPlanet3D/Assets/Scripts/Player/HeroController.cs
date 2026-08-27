@@ -62,6 +62,7 @@ namespace MonsterPlanet3D.Player
         private float _energy;
         private float _perfectDodgeUntil;
         private bool _perfectDodgeTriggered;
+        private int _heroStyle;
 
         public event Action<float> EnergyChanged;
         public event Action<int> ComboChanged;
@@ -134,6 +135,11 @@ namespace MonsterPlanet3D.Player
             baseDamage = Mathf.Max(1f, damage);
             jumpHeight = Mathf.Max(0.5f, jump);
             _combatant.Configure(maxHealth);
+        }
+
+        public void ConfigureHeroStyle(int styleIndex)
+        {
+            _heroStyle = Mathf.Clamp(styleIndex, 0, 2);
         }
 
         public void SetReferences(
@@ -541,6 +547,23 @@ namespace MonsterPlanet3D.Player
         private IEnumerator SkillRoutine()
         {
             AddEnergy(-100f);
+            switch (_heroStyle)
+            {
+                case 1:
+                    yield return NovaDashSkillRoutine();
+                    break;
+                case 2:
+                    yield return SolarSlamSkillRoutine();
+                    break;
+                default:
+                    yield return AuroraBeamSkillRoutine();
+                    break;
+            }
+            _skillRoutine = null;
+        }
+
+        private IEnumerator AuroraBeamSkillRoutine()
+        {
             FaceTarget(30f);
             visual?.PlaySkill(1.45f);
             audioFx?.PlaySkillCharge(transform.position);
@@ -548,6 +571,7 @@ namespace MonsterPlanet3D.Player
 
             var chargePoint = attackOrigin.position + transform.forward * 0.7f;
             vfx?.PlaySkillCharge(chargePoint, visual != null ? visual.PrimaryColor : Color.cyan);
+            vfx?.PlaySkillSigil(transform.position + Vector3.up * 0.08f, visual != null ? visual.PrimaryColor : Color.cyan, 1.35f);
             yield return new WaitForSeconds(0.62f);
 
             FaceTarget(40f);
@@ -580,7 +604,124 @@ namespace MonsterPlanet3D.Player
             }
 
             yield return new WaitForSeconds(0.62f);
-            _skillRoutine = null;
+        }
+
+        private IEnumerator NovaDashSkillRoutine()
+        {
+            var color = visual != null ? visual.PrimaryColor : new Color(0.2f, 0.35f, 1f);
+            FaceTarget(34f);
+            visual?.PlaySkill(1.5f);
+            audioFx?.PlaySkillCharge(transform.position);
+            combatCamera?.BeginHeroMoment(0.25f);
+            _combatant.GrantInvulnerability(1.5f);
+            vfx?.PlaySkillCharge(transform.position + Vector3.up * 1.25f, color);
+            vfx?.PlaySkillSigil(transform.position + Vector3.up * 0.08f, color, 1.05f);
+            yield return new WaitForSeconds(0.38f);
+
+            if (Target == null)
+            {
+                yield return new WaitForSeconds(0.25f);
+                yield break;
+            }
+
+            for (var strike = 0; strike < 5; strike++)
+            {
+                var angle = strike * 144f + 28f;
+                var offset = Quaternion.Euler(0f, angle, 0f) * Vector3.forward * 1.72f;
+                var destination = Target.position + offset;
+                destination.y = Mathf.Max(0.05f, transform.position.y);
+                var start = transform.position;
+                _controller.Move(destination - start);
+                FaceTarget(80f);
+                visual?.PlayAttack(strike % 3 + 1);
+                vfx?.PlayDashTrail(start + Vector3.up * 1.1f, transform.position + Vector3.up * 1.1f, color, strike);
+                vfx?.PlayMeleeHit(Target.position + Vector3.up * 1.25f, (Target.position - transform.position).normalized, strike == 4 ? 3 : 2);
+                audioFx?.PlayWhoosh(transform.position, strike + 1);
+                DamageCurrentTarget(skillDamage * (strike == 4 ? 0.25f : 0.14f), 2.6f, 0.02f);
+                combatCamera?.Shake(0.18f + strike * 0.025f, 0.08f);
+                yield return new WaitForSeconds(0.11f);
+            }
+
+            vfx?.PlayNovaBurst(Target.position + Vector3.up * 1.05f, color);
+            audioFx?.PlayImpact(Target.position + Vector3.up, 4);
+            combatCamera?.Shake(0.72f, 0.38f);
+            DamageCurrentTarget(skillDamage * 0.42f, 11f, 0.1f);
+            FindFirstObjectByType<BattleTime>()?.SlowMotion(0.2f, 0.22f);
+            yield return new WaitForSeconds(0.42f);
+        }
+
+        private IEnumerator SolarSlamSkillRoutine()
+        {
+            var color = visual != null ? visual.PrimaryColor : new Color(1f, 0.22f, 0.04f);
+            FaceTarget(32f);
+            visual?.PlaySkill(1.7f);
+            audioFx?.PlaySkillCharge(transform.position);
+            combatCamera?.BeginHeroMoment(0.32f);
+            _combatant.GrantInvulnerability(1.75f);
+            vfx?.PlaySolarCharge(transform.position + Vector3.up * 1.45f, color);
+            vfx?.PlaySkillSigil(transform.position + Vector3.up * 0.08f, color, 1.5f);
+            yield return new WaitForSeconds(0.46f);
+
+            var start = transform.position;
+            var forward = Target != null ? Target.position - start : transform.forward * 4f;
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 0.01f) forward = transform.forward;
+            var landing = Target != null
+                ? Target.position - forward.normalized * 1.55f
+                : start + forward.normalized * 4f;
+            landing.y = 0.05f;
+            var elapsed = 0f;
+            const float flightDuration = 0.68f;
+            var trailTimer = 0f;
+            while (elapsed < flightDuration)
+            {
+                elapsed += Time.deltaTime;
+                trailTimer -= Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / flightDuration);
+                var desired = Vector3.Lerp(start, landing, Mathf.SmoothStep(0f, 1f, t));
+                desired.y += Mathf.Sin(t * Mathf.PI) * 3.4f;
+                _controller.Move(desired - transform.position);
+                FaceTarget(45f);
+                if (trailTimer <= 0f)
+                {
+                    trailTimer = 0.065f;
+                    vfx?.PlaySolarTrail(transform.position + Vector3.up * 1.1f, color);
+                }
+                yield return null;
+            }
+
+            _verticalVelocity = -2f;
+            var impact = Target != null ? Target.position : landing;
+            impact.y = 0.08f;
+            vfx?.PlaySolarImpact(impact, color);
+            audioFx?.PlayImpact(impact, 5);
+            combatCamera?.Shake(0.95f, 0.58f);
+            DamageCurrentTarget(skillDamage * 1.18f, 15f, 0.14f);
+            FindFirstObjectByType<BattleTime>()?.SlowMotion(0.16f, 0.34f);
+            yield return new WaitForSeconds(0.62f);
+        }
+
+        private void DamageCurrentTarget(float damage, float impulse, float hitStop)
+        {
+            if (Target == null)
+            {
+                return;
+            }
+
+            var targetCombatant = Target.GetComponent<Combatant>() ?? Target.GetComponentInParent<Combatant>();
+            if (targetCombatant == null || targetCombatant.IsDead)
+            {
+                return;
+            }
+
+            var direction = Target.position - transform.position;
+            direction.y = 0.18f;
+            var point = Target.position + Vector3.up * 1.15f;
+            var info = new DamageInfo(gameObject, damage, point, direction.normalized, impulse, hitStop);
+            if (targetCombatant.TryTakeDamage(info) && hitStop > 0.05f)
+            {
+                FindFirstObjectByType<BattleTime>()?.HitStop(hitStop);
+            }
         }
 
         private void FaceTarget(float speed)

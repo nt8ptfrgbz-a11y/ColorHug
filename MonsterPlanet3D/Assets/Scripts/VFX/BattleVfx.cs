@@ -62,6 +62,47 @@ namespace MonsterPlanet3D.VFX
             StartCoroutine(PulseOrbRoutine(position, color));
         }
 
+        public void PlaySkillSigil(Vector3 position, Color color, float radius)
+        {
+            StartCoroutine(SkillSigilRoutine(position, color, radius));
+        }
+
+        public void PlayDashTrail(Vector3 start, Vector3 end, Color color, int strike)
+        {
+            StartCoroutine(DashTrailRoutine(start, end, color, strike));
+            EmitBurst(end, color, 18, 0.28f, 5.5f, 0.025f, 0.13f, (end - start).normalized);
+        }
+
+        public void PlayNovaBurst(Vector3 position, Color color)
+        {
+            EmitBurst(position, color, 110, 0.72f, 11f, 0.035f, 0.32f, Vector3.up);
+            EmitBurst(position, Color.white, 54, 0.34f, 8f, 0.025f, 0.18f, Vector3.up);
+            PlayShockwave(position, Vector3.up, 4.2f);
+            StartCoroutine(EnergyPillarRoutine(position, color, 5.2f, 0.44f));
+        }
+
+        public void PlaySolarCharge(Vector3 position, Color color)
+        {
+            EmitBurst(position, new Color(1f, 0.52f, 0.06f), 92, 1.0f, -3.4f, 0.04f, 0.3f, Vector3.up);
+            StartCoroutine(PulseOrbRoutine(position, Color.Lerp(color, new Color(1f, 0.72f, 0.08f), 0.62f)));
+            StartCoroutine(EnergyPillarRoutine(position - Vector3.up * 1.4f, color, 3.2f, 0.58f));
+        }
+
+        public void PlaySolarTrail(Vector3 position, Color color)
+        {
+            EmitBurst(position, Color.Lerp(color, new Color(1f, 0.72f, 0.08f), 0.55f), 7, 0.34f, 3.6f, 0.035f, 0.16f, Vector3.down);
+        }
+
+        public void PlaySolarImpact(Vector3 position, Color color)
+        {
+            var gold = Color.Lerp(color, new Color(1f, 0.72f, 0.08f), 0.68f);
+            EmitBurst(position + Vector3.up * 0.25f, gold, 150, 0.95f, 14f, 0.045f, 0.42f, Vector3.up);
+            EmitBurst(position + Vector3.up * 0.45f, Color.white, 64, 0.42f, 9f, 0.025f, 0.2f, Vector3.up);
+            PlayShockwave(position + Vector3.up * 0.06f, Vector3.up, 5.6f);
+            PlayShockwave(position + Vector3.up * 0.24f, Vector3.up, 3.8f);
+            StartCoroutine(EnergyPillarRoutine(position, gold, 7.5f, 0.62f));
+        }
+
         public void PlayDangerRing(Vector3 position, float radius, float duration)
         {
             StartCoroutine(DangerRingRoutine(position, radius, duration));
@@ -252,8 +293,15 @@ namespace MonsterPlanet3D.VFX
 
         private IEnumerator BeamRoutine(Vector3 origin, Vector3 direction, float length, float duration, Color color, bool massive)
         {
+            if (massive)
+            {
+                EmitBurst(origin, color, 48, 0.42f, 5.5f, 0.025f, 0.2f, -direction);
+                PlayShockwave(origin, direction, 1.1f);
+            }
             var beam = new GameObject("Hero energy beam");
-            var core = beam.AddComponent<LineRenderer>();
+            var coreObject = new GameObject("Beam core");
+            coreObject.transform.SetParent(beam.transform, false);
+            var core = coreObject.AddComponent<LineRenderer>();
             core.positionCount = 2;
             core.useWorldSpace = true;
             core.sharedMaterial = _additiveMaterial;
@@ -261,7 +309,9 @@ namespace MonsterPlanet3D.VFX
             core.SetPosition(0, origin);
             core.SetPosition(1, origin + direction * length);
 
-            var halo = beam.AddComponent<LineRenderer>();
+            var haloObject = new GameObject("Beam halo");
+            haloObject.transform.SetParent(beam.transform, false);
+            var halo = haloObject.AddComponent<LineRenderer>();
             halo.positionCount = 2;
             halo.useWorldSpace = true;
             halo.sharedMaterial = _additiveMaterial;
@@ -293,19 +343,19 @@ namespace MonsterPlanet3D.VFX
                 elapsed += Time.deltaTime;
                 var t = Mathf.Clamp01(elapsed / duration);
                 var pulse = Mathf.Sin(t * Mathf.PI);
-                core.startWidth = (massive ? 0.22f : 0.07f) + pulse * (massive ? 0.65f : 0.24f);
-                core.endWidth = (massive ? 0.12f : 0.04f) + pulse * (massive ? 0.42f : 0.14f);
-                var beamColor = Color.Lerp(Color.white, color, 0.62f);
+                core.startWidth = (massive ? 0.15f : 0.055f) + pulse * (massive ? 0.42f : 0.17f);
+                core.endWidth = (massive ? 0.08f : 0.03f) + pulse * (massive ? 0.26f : 0.1f);
+                var beamColor = Color.Lerp(Color.white, color, massive ? 0.78f : 0.72f);
                 beamColor.a = Mathf.Clamp01((1f - t) * 2.5f);
                 core.startColor = core.endColor = beamColor;
                 var haloColor = color;
                 haloColor.a = (1f - t) * (massive ? 0.32f : 0.18f);
                 halo.startColor = halo.endColor = haloColor;
-                halo.startWidth = core.startWidth * (massive ? 2.5f : 1.9f);
-                halo.endWidth = core.endWidth * (massive ? 2.5f : 1.9f);
+                halo.startWidth = core.startWidth * (massive ? 2.15f : 1.75f);
+                halo.endWidth = core.endWidth * (massive ? 2.15f : 1.75f);
                 if (spiral != null)
                 {
-                    var spiralColor = Color.Lerp(Color.white, color, 0.35f);
+                    var spiralColor = Color.Lerp(Color.white, color, 0.68f);
                     spiralColor.a = Mathf.Clamp01((1f - t) * 2f);
                     spiral.startColor = spiral.endColor = spiralColor;
                     for (var pointIndex = 0; pointIndex < spiral.positionCount; pointIndex++)
@@ -392,6 +442,123 @@ namespace MonsterPlanet3D.VFX
             }
             Destroy(material);
             Destroy(orb);
+        }
+
+        private IEnumerator SkillSigilRoutine(Vector3 position, Color color, float radius)
+        {
+            var effect = new GameObject("Guardian skill sigil");
+            effect.transform.position = position;
+            var rings = new LineRenderer[3];
+            for (var ringIndex = 0; ringIndex < rings.Length; ringIndex++)
+            {
+                var ringObject = new GameObject("Photon ring " + ringIndex);
+                ringObject.transform.SetParent(effect.transform, false);
+                ringObject.transform.localRotation = Quaternion.Euler(90f + ringIndex * 17f, ringIndex * 42f, 0f);
+                var ring = ringObject.AddComponent<LineRenderer>();
+                ring.loop = true;
+                ring.useWorldSpace = false;
+                ring.positionCount = ringIndex == 2 ? 6 : 64;
+                ring.sharedMaterial = _additiveMaterial;
+                ring.numCornerVertices = 4;
+                ring.numCapVertices = 4;
+                for (var point = 0; point < ring.positionCount; point++)
+                {
+                    var angle = point / (float)ring.positionCount * Mathf.PI * 2f;
+                    var shapeRadius = ringIndex == 2 && point % 2 == 0 ? 1f : (ringIndex == 2 ? 0.55f : 1f);
+                    ring.SetPosition(point, new Vector3(Mathf.Cos(angle) * shapeRadius, Mathf.Sin(angle) * shapeRadius, 0f));
+                }
+                rings[ringIndex] = ring;
+            }
+
+            const float duration = 0.82f;
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                effect.transform.rotation = Quaternion.Euler(0f, t * 260f, 0f);
+                effect.transform.localScale = Vector3.one * Mathf.Lerp(radius * 0.35f, radius, Mathf.SmoothStep(0f, 1f, t));
+                for (var ringIndex = 0; ringIndex < rings.Length; ringIndex++)
+                {
+                    var alpha = Mathf.Sin(t * Mathf.PI) * (ringIndex == 2 ? 0.9f : 0.62f);
+                    var ringColor = Color.Lerp(Color.white, color, 0.58f + ringIndex * 0.14f);
+                    ringColor.a = alpha;
+                    rings[ringIndex].startColor = rings[ringIndex].endColor = ringColor;
+                    rings[ringIndex].startWidth = rings[ringIndex].endWidth = (0.055f + ringIndex * 0.018f) / Mathf.Max(0.2f, effect.transform.localScale.x);
+                }
+                yield return null;
+            }
+            Destroy(effect);
+        }
+
+        private IEnumerator DashTrailRoutine(Vector3 start, Vector3 end, Color color, int strike)
+        {
+            var effect = new GameObject("Nova dash ribbon");
+            var direction = end - start;
+            var side = Vector3.Cross(direction.normalized, Vector3.up);
+            if (side.sqrMagnitude < 0.01f) side = Vector3.right;
+            side.Normalize();
+            var ribbons = new LineRenderer[3];
+            for (var index = 0; index < ribbons.Length; index++)
+            {
+                var ribbonObject = new GameObject("Dash ribbon " + index);
+                ribbonObject.transform.SetParent(effect.transform, false);
+                var ribbon = ribbonObject.AddComponent<LineRenderer>();
+                ribbon.positionCount = 4;
+                ribbon.useWorldSpace = true;
+                ribbon.sharedMaterial = _additiveMaterial;
+                ribbon.numCapVertices = 6;
+                var offset = side * (index - 1) * 0.2f;
+                ribbon.SetPosition(0, start + offset);
+                ribbon.SetPosition(1, Vector3.Lerp(start, end, 0.35f) + offset + Vector3.up * 0.18f);
+                ribbon.SetPosition(2, Vector3.Lerp(start, end, 0.72f) - offset + Vector3.up * 0.08f);
+                ribbon.SetPosition(3, end - offset);
+                ribbons[index] = ribbon;
+            }
+
+            const float duration = 0.3f;
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                for (var index = 0; index < ribbons.Length; index++)
+                {
+                    var ribbonColor = index == 1 ? Color.white : color;
+                    ribbonColor.a = 1f - t;
+                    ribbons[index].startColor = ribbons[index].endColor = ribbonColor;
+                    ribbons[index].startWidth = Mathf.Lerp(0.2f, 0.015f, t);
+                    ribbons[index].endWidth = Mathf.Lerp(0.06f, 0.005f, t);
+                }
+                yield return null;
+            }
+            Destroy(effect);
+        }
+
+        private IEnumerator EnergyPillarRoutine(Vector3 position, Color color, float height, float duration)
+        {
+            var pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pillar.name = "Photon impact pillar";
+            pillar.transform.position = position + Vector3.up * height * 0.5f;
+            var collider = pillar.GetComponent<Collider>();
+            if (collider != null) Destroy(collider);
+            var renderer = pillar.GetComponent<Renderer>();
+            var material = CreateMaterial(true);
+            renderer.sharedMaterial = material;
+            var elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = Mathf.Clamp01(elapsed / duration);
+                var pulse = Mathf.Sin(t * Mathf.PI);
+                pillar.transform.localScale = new Vector3(0.18f + pulse * 0.72f, height * 0.5f, 0.18f + pulse * 0.72f);
+                var pillarColor = Color.Lerp(Color.white, color, 0.66f);
+                pillarColor.a = (1f - t) * 0.72f;
+                SetMaterialColor(material, pillarColor);
+                yield return null;
+            }
+            Destroy(material);
+            Destroy(pillar);
         }
 
         private IEnumerator FadeGhostRoutine(GameObject ghost, Renderer renderer, Material material)

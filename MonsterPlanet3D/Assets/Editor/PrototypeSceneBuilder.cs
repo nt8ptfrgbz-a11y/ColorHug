@@ -190,10 +190,10 @@ namespace MonsterPlanet3D.EditorTools
         private static void ConfigureWorld()
         {
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.52f, 0.58f, 0.76f);
-            RenderSettings.ambientSkyColor = new Color(0.52f, 0.58f, 0.76f);
-            RenderSettings.ambientEquatorColor = new Color(0.3f, 0.36f, 0.54f);
-            RenderSettings.ambientGroundColor = new Color(0.14f, 0.18f, 0.3f);
+            RenderSettings.ambientLight = new Color(0.24f, 0.28f, 0.38f);
+            RenderSettings.ambientSkyColor = new Color(0.28f, 0.33f, 0.46f);
+            RenderSettings.ambientEquatorColor = new Color(0.17f, 0.21f, 0.33f);
+            RenderSettings.ambientGroundColor = new Color(0.07f, 0.09f, 0.16f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = new Color(0.055f, 0.085f, 0.18f);
@@ -203,7 +203,7 @@ namespace MonsterPlanet3D.EditorTools
             keyLightObject.transform.rotation = Quaternion.Euler(48f, -34f, 0f);
             var keyLight = keyLightObject.AddComponent<Light>();
             keyLight.type = LightType.Directional;
-            keyLight.intensity = 2.1f;
+            keyLight.intensity = 1.3f;
             keyLight.color = new Color(0.76f, 0.87f, 1f);
             keyLight.shadows = LightShadows.Soft;
 
@@ -212,7 +212,7 @@ namespace MonsterPlanet3D.EditorTools
             var rimLight = rimLightObject.AddComponent<Light>();
             rimLight.type = LightType.Point;
             rimLight.range = 22f;
-            rimLight.intensity = 5f;
+            rimLight.intensity = 2.7f;
             rimLight.color = new Color(0.12f, 0.35f, 1f);
 
             var warmFillObject = new GameObject("Combat Warm Fill");
@@ -220,7 +220,7 @@ namespace MonsterPlanet3D.EditorTools
             var warmFill = warmFillObject.AddComponent<Light>();
             warmFill.type = LightType.Point;
             warmFill.range = 18f;
-            warmFill.intensity = 3.2f;
+            warmFill.intensity = 1.8f;
             warmFill.color = new Color(1f, 0.34f, 0.16f);
 
         }
@@ -239,8 +239,8 @@ namespace MonsterPlanet3D.EditorTools
 
             var bloom = profile.Add<Bloom>(true);
             AssetDatabase.AddObjectToAsset(bloom, profile);
-            bloom.intensity.Override(0.75f);
-            bloom.threshold.Override(0.82f);
+            bloom.intensity.Override(0.58f);
+            bloom.threshold.Override(0.95f);
 
             var color = profile.Add<ColorAdjustments>(true);
             AssetDatabase.AddObjectToAsset(color, profile);
@@ -268,12 +268,12 @@ namespace MonsterPlanet3D.EditorTools
                 ArenaEdge = GetOrCreateMaterial("ArenaEdge", new Color(0.05f, 0.32f, 0.48f), 0.35f, 0.75f, new Color(0.02f, 0.55f, 1f) * 2.2f),
                 Rock = GetOrCreateMaterial("SpaceRock", new Color(0.2f, 0.22f, 0.32f), 0.05f, 0.28f),
                 Crystal = GetOrCreateMaterial("Crystal", new Color(0.15f, 0.62f, 1f), 0.25f, 0.85f, new Color(0.04f, 0.55f, 1f) * 2.8f),
-                Silver = GetOrCreateMaterial("HeroSilver", new Color(0.68f, 0.73f, 0.8f), 0.78f, 0.86f),
+                Silver = GetOrCreateMaterial("HeroSilver", new Color(0.42f, 0.47f, 0.55f), 0.72f, 0.8f),
                 HeroBlue = GetOrCreateMaterial("HeroBlue", new Color(0.03f, 0.45f, 0.88f), 0.35f, 0.72f),
                 HeroDark = GetOrCreateMaterial("HeroDark", new Color(0.025f, 0.05f, 0.11f), 0.48f, 0.7f),
                 HeroGlow = GetOrCreateMaterial("HeroGlow", new Color(0.35f, 0.95f, 1f), 0.05f, 0.9f, new Color(0.1f, 0.85f, 1f) * 4f),
-                Monster = GetOrCreateMaterial("MonsterSkin", new Color(0.055f, 0.12f, 0.17f), 0.18f, 0.32f),
-                MonsterArmor = GetOrCreateMaterial("MonsterArmor", new Color(0.34f, 0.055f, 0.07f), 0.48f, 0.58f),
+                Monster = GetOrCreateMaterial("MonsterSkin", new Color(0.12f, 0.24f, 0.21f), 0.18f, 0.32f),
+                MonsterArmor = GetOrCreateMaterial("MonsterArmor", new Color(0.52f, 0.065f, 0.055f), 0.48f, 0.58f),
                 MonsterGlow = GetOrCreateMaterial("MonsterGlow", new Color(1f, 0.22f, 0.035f), 0.1f, 0.8f, new Color(1f, 0.035f, 0.005f) * 4.8f)
             };
         }
@@ -552,6 +552,7 @@ namespace MonsterPlanet3D.EditorTools
 
             var visual = visualRoot.gameObject.AddComponent<ProceduralKaijuVisual>();
             visual.Configure(bodyRig, head, leftArm, rightArm, leftLeg, rightLeg, tail);
+            BuildExternalMonsterModel(visualRoot, visual, materials);
             return new MonsterBuildResult { Controller = kaijuController, Visual = visual };
         }
 
@@ -559,35 +560,13 @@ namespace MonsterPlanet3D.EditorTools
         {
             var models = new[]
             {
-                TryInstantiateAnimatedModel(
-                    "Assets/ThirdParty/Quaternius/reclaimer-finn.gltf",
-                    "Aurora Model",
-                    parent,
-                    new Vector3(0f, 0f, 0f),
-                    0.96f,
-                    "Idle", "Run", "Jump", "Punch", "Weapon", "HitReact", "Death"),
-                TryInstantiateAnimatedModel(
-                    "Assets/ThirdParty/Quaternius/reclaimer-finn.gltf",
-                    "Nova Model",
-                    parent,
-                    new Vector3(0f, 0f, 0f),
-                    0.96f,
-                    "Idle", "Run", "Jump", "Punch", "Weapon", "HitReact", "Death"),
-                TryInstantiateAnimatedModel(
-                    "Assets/ThirdParty/Quaternius/reclaimer-finn.gltf",
-                    "Sol Model",
-                    parent,
-                    new Vector3(0f, 0f, 0f),
-                    0.96f,
-                    "Idle", "Run", "Jump", "Punch", "Weapon", "HitReact", "Death")
+                TryBuildRetargetedHeroVariant("Aurora Guardian", parent, materials, 0),
+                TryBuildRetargetedHeroVariant("Nova Guardian", parent, materials, 1),
+                TryBuildRetargetedHeroVariant("Sol Guardian", parent, materials, 2)
             }.Where(model => model != null).ToArray();
 
             if (models.Length == 3)
             {
-                for (var i = 0; i < models.Length; i++)
-                {
-                    AddLightGuardianArmor(models[i].transform, materials, i);
-                }
                 visual.ConfigureExternalModels(models);
             }
             else
@@ -597,24 +576,139 @@ namespace MonsterPlanet3D.EditorTools
             }
         }
 
+        private static ExternalAnimationDriver TryBuildRetargetedHeroVariant(
+            string instanceName,
+            Transform parent,
+            MaterialPalette materials,
+            int skinIndex)
+        {
+            const string visiblePath = "Assets/ThirdParty/Quaternius/UniversalBase/Superhero_Male_FullBody.fbx";
+            const string motionPath = "Assets/ThirdParty/Quaternius/reclaimer-finn.gltf";
+            var visiblePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(visiblePath);
+            var motionPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(motionPath);
+            if (visiblePrefab == null || motionPrefab == null)
+            {
+                return null;
+            }
+
+            var wrapper = new GameObject(instanceName);
+            wrapper.transform.SetParent(parent, false);
+
+            var visible = PrefabUtility.InstantiatePrefab(visiblePrefab, wrapper.transform) as GameObject;
+            if (visible == null) visible = Object.Instantiate(visiblePrefab, wrapper.transform);
+            visible.name = "Visible Light Guardian";
+            visible.transform.localPosition = Vector3.zero;
+            visible.transform.localRotation = Quaternion.identity;
+            visible.transform.localScale = Vector3.one * 1.46f;
+            foreach (var animator in visible.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
+            foreach (var collider in visible.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(collider);
+            StyleGuardianBaseModel(visible, materials);
+
+            var motionSource = PrefabUtility.InstantiatePrefab(motionPrefab, wrapper.transform) as GameObject;
+            if (motionSource == null) motionSource = Object.Instantiate(motionPrefab, wrapper.transform);
+            motionSource.name = "Hidden Motion Source";
+            motionSource.transform.localPosition = Vector3.zero;
+            motionSource.transform.localRotation = Quaternion.identity;
+            motionSource.transform.localScale = Vector3.one;
+            foreach (var renderer in motionSource.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
+            foreach (var collider in motionSource.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(collider);
+
+            var animatorSource = motionSource.GetComponent<Animator>() ?? motionSource.AddComponent<Animator>();
+            animatorSource.applyRootMotion = false;
+            // The source meshes are deliberately invisible, but their bones
+            // must keep animating because they drive the visible guardian.
+            animatorSource.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            animatorSource.runtimeAnimatorController = CreateAnimatorController(motionPath, instanceName + " Motion", "Idle");
+            if (animatorSource.runtimeAnimatorController == null)
+            {
+                Object.DestroyImmediate(wrapper);
+                return null;
+            }
+
+            var retargeter = wrapper.AddComponent<BonePoseRetargeter>();
+            retargeter.Configure(motionSource.transform, visible.transform);
+            var guardianPose = wrapper.AddComponent<GuardianPoseAnimator>();
+            guardianPose.Configure(visible.transform);
+            var driver = wrapper.AddComponent<ExternalAnimationDriver>();
+            driver.Configure(animatorSource, "Idle", "Run", "Jump", "Punch", "Weapon", "HitReact", "Death");
+            AddLightGuardianArmor(visible.transform, materials, skinIndex);
+            return driver;
+        }
+
+        private static void StyleGuardianBaseModel(GameObject visible, MaterialPalette materials)
+        {
+            foreach (var targetRenderer in visible.GetComponentsInChildren<Renderer>(true))
+            {
+                if (targetRenderer.name.IndexOf("Eyebrow", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    targetRenderer.enabled = false;
+                    continue;
+                }
+
+                var material = targetRenderer.name.IndexOf("Eye", System.StringComparison.OrdinalIgnoreCase) >= 0
+                    ? materials.HeroGlow
+                    : materials.Silver;
+                var assigned = new Material[Mathf.Max(1, targetRenderer.sharedMaterials.Length)];
+                for (var i = 0; i < assigned.Length; i++) assigned[i] = material;
+                targetRenderer.sharedMaterials = assigned;
+            }
+        }
+
         private static void AddLightGuardianArmor(Transform modelRoot, MaterialPalette materials, int skinIndex)
         {
-            var primary = skinIndex == 2 ? materials.MonsterGlow : materials.HeroBlue;
+            var primary = skinIndex == 0
+                ? materials.HeroBlue
+                : (skinIndex == 1
+                    ? GetOrCreateMaterial("HeroNova", new Color(0.16f, 0.2f, 0.92f), 0.46f, 0.76f, new Color(0.08f, 0.25f, 1f) * 1.6f)
+                    : GetOrCreateMaterial("HeroSolar", new Color(0.92f, 0.055f, 0.025f), 0.42f, 0.72f, new Color(1f, 0.12f, 0.025f) * 1.4f));
+            var glow = skinIndex == 2
+                ? GetOrCreateMaterial("HeroSolarGlow", new Color(1f, 0.62f, 0.08f), 0.05f, 0.9f, new Color(1f, 0.28f, 0.015f) * 5f)
+                : materials.HeroGlow;
             var headBone = FindDescendant(modelRoot, "Head");
             if (headBone != null)
             {
-                CreateBoneAccessory("Light Helmet", PrimitiveType.Sphere, modelRoot, headBone, new Vector3(0f, 0.02f, 0f), new Vector3(0.58f, 0.62f, 0.56f), materials.Silver);
-                CreateBoneAccessory("Light Crest", PrimitiveType.Cube, modelRoot, headBone, new Vector3(0f, 0.48f, -0.02f), new Vector3(0.055f, 0.34f, 0.17f), primary, new Vector3(8f, 0f, 0f));
-                CreateBoneAccessory("Light Eye Left", PrimitiveType.Cube, modelRoot, headBone, new Vector3(-0.22f, 0.1f, 0.51f), new Vector3(0.17f, 0.055f, 0.035f), materials.HeroGlow, new Vector3(0f, -8f, -8f));
-                CreateBoneAccessory("Light Eye Right", PrimitiveType.Cube, modelRoot, headBone, new Vector3(0.22f, 0.1f, 0.51f), new Vector3(0.17f, 0.055f, 0.035f), materials.HeroGlow, new Vector3(0f, 8f, 8f));
+                CreateBoneAccessory("Light Helmet", PrimitiveType.Sphere, modelRoot, headBone, new Vector3(0f, 0.025f, 0f), new Vector3(0.35f, 0.44f, 0.35f), materials.Silver);
+                CreateBoneAccessory("Light Crest", PrimitiveType.Cube, modelRoot, headBone, new Vector3(0f, 0.39f, -0.025f), new Vector3(0.045f, 0.27f, 0.12f), primary, new Vector3(8f, 0f, 0f));
+                CreateBoneAccessory("Light Ear Left", PrimitiveType.Cube, modelRoot, headBone, new Vector3(-0.34f, 0.02f, -0.01f), new Vector3(0.07f, 0.15f, 0.12f), primary, new Vector3(0f, 0f, -18f));
+                CreateBoneAccessory("Light Ear Right", PrimitiveType.Cube, modelRoot, headBone, new Vector3(0.34f, 0.02f, -0.01f), new Vector3(0.07f, 0.15f, 0.12f), primary, new Vector3(0f, 0f, 18f));
+                CreateBoneAccessory("Light Eye Left", PrimitiveType.Cube, modelRoot, headBone, new Vector3(-0.145f, 0.075f, 0.32f), new Vector3(0.12f, 0.045f, 0.025f), glow, new Vector3(0f, -6f, -13f));
+                CreateBoneAccessory("Light Eye Right", PrimitiveType.Cube, modelRoot, headBone, new Vector3(0.145f, 0.075f, 0.32f), new Vector3(0.12f, 0.045f, 0.025f), glow, new Vector3(0f, 6f, 13f));
             }
 
-            var torsoBone = FindDescendant(modelRoot, "Torso") ?? FindDescendant(modelRoot, "Chest");
+            var torsoBone = FindDescendant(modelRoot, "spine_03") ?? FindDescendant(modelRoot, "Torso") ?? FindDescendant(modelRoot, "Chest");
             if (torsoBone != null)
             {
-                CreateBoneAccessory("Light Chest Left", PrimitiveType.Cube, modelRoot, torsoBone, new Vector3(-0.18f, 0.08f, 0.34f), new Vector3(0.28f, 0.08f, 0.045f), primary, new Vector3(0f, 0f, -28f));
-                CreateBoneAccessory("Light Chest Right", PrimitiveType.Cube, modelRoot, torsoBone, new Vector3(0.18f, 0.08f, 0.34f), new Vector3(0.28f, 0.08f, 0.045f), primary, new Vector3(0f, 0f, 28f));
-                CreateBoneAccessory("Light Energy Core", PrimitiveType.Sphere, modelRoot, torsoBone, new Vector3(0f, -0.05f, 0.42f), new Vector3(0.13f, 0.13f, 0.07f), materials.HeroGlow);
+                CreateBoneAccessory("Light Chest Left", PrimitiveType.Cube, modelRoot, torsoBone, new Vector3(-0.14f, 0.045f, 0.23f), new Vector3(0.23f, 0.055f, 0.025f), primary, new Vector3(0f, 0f, -32f));
+                CreateBoneAccessory("Light Chest Right", PrimitiveType.Cube, modelRoot, torsoBone, new Vector3(0.14f, 0.045f, 0.23f), new Vector3(0.23f, 0.055f, 0.025f), primary, new Vector3(0f, 0f, 32f));
+                CreateBoneAccessory("Light Energy Core", PrimitiveType.Sphere, modelRoot, torsoBone, new Vector3(0f, -0.03f, 0.255f), new Vector3(0.105f, 0.105f, 0.045f), glow);
+            }
+
+            var pelvisBone = FindDescendant(modelRoot, "pelvis");
+            if (pelvisBone != null)
+            {
+                CreateBoneAccessory("Light Belt", PrimitiveType.Cylinder, modelRoot, pelvisBone, new Vector3(0f, 0.11f, 0f), new Vector3(0.31f, 0.035f, 0.24f), primary);
+                CreateBoneAccessory("Light Belt Core", PrimitiveType.Sphere, modelRoot, pelvisBone, new Vector3(0f, 0.11f, 0.245f), new Vector3(0.075f, 0.075f, 0.035f), glow);
+            }
+
+            AddGuardianJointArmor(modelRoot, "upperarm_l", "Light Shoulder Left", new Vector3(0.17f, 0.13f, 0.17f), primary);
+            AddGuardianJointArmor(modelRoot, "upperarm_r", "Light Shoulder Right", new Vector3(0.17f, 0.13f, 0.17f), primary);
+            AddGuardianJointArmor(modelRoot, "forearm_l", "Light Bracer Left", new Vector3(0.13f, 0.17f, 0.13f), primary);
+            AddGuardianJointArmor(modelRoot, "forearm_r", "Light Bracer Right", new Vector3(0.13f, 0.17f, 0.13f), primary);
+            AddGuardianJointArmor(modelRoot, "calf_l", "Light Knee Left", new Vector3(0.15f, 0.12f, 0.16f), primary);
+            AddGuardianJointArmor(modelRoot, "calf_r", "Light Knee Right", new Vector3(0.15f, 0.12f, 0.16f), primary);
+        }
+
+        private static void AddGuardianJointArmor(
+            Transform modelRoot,
+            string boneName,
+            string accessoryName,
+            Vector3 scale,
+            Material material)
+        {
+            var bone = FindDescendant(modelRoot, boneName);
+            if (bone != null)
+            {
+                CreateBoneAccessory(accessoryName, PrimitiveType.Sphere, modelRoot, bone, Vector3.zero, scale, material);
             }
         }
 
@@ -646,22 +740,108 @@ namespace MonsterPlanet3D.EditorTools
             return null;
         }
 
-        private static void BuildExternalMonsterModel(Transform parent, ProceduralKaijuVisual visual)
+        private static void BuildExternalMonsterModel(Transform parent, ProceduralKaijuVisual visual, MaterialPalette materials)
         {
             var model = TryInstantiateAnimatedModel(
-                "Assets/ThirdParty/Quaternius/ventlurker-glub.gltf",
-                "Ventlurker Model",
+                "Assets/ThirdParty/Quaternius/dino-kaiju.gltf",
+                "Rockhorn Dino Kaiju",
                 parent,
-                new Vector3(0f, -1.15f, 0f),
-                2.25f,
-                "Flying_Idle", "Fast_Flying", "Headbutt", "Punch", "Headbutt", "HitReact", "Death");
+                Vector3.zero,
+                1.95f,
+                "Idle", "Run", "Jump", "Punch", "Weapon", "HitReact", "Death");
             if (model != null)
             {
+                StyleKaijuModel(model.gameObject, materials);
+                AddRockhornKaijuFeatures(model.transform, materials);
                 visual.ConfigureExternalModel(model);
             }
             else
             {
                 Debug.LogWarning("Animated monster asset was not ready. The procedural 3D kaiju remains active.");
+            }
+        }
+
+        private static void StyleKaijuModel(GameObject model, MaterialPalette materials)
+        {
+            foreach (var targetRenderer in model.GetComponentsInChildren<Renderer>(true))
+            {
+                var assigned = targetRenderer.sharedMaterials;
+                if (assigned.Length == 0)
+                {
+                    targetRenderer.sharedMaterial = materials.Monster;
+                    continue;
+                }
+
+                for (var i = 0; i < assigned.Length; i++)
+                {
+                    var material = assigned[i];
+                    if (material == null)
+                    {
+                        assigned[i] = materials.Monster;
+                        continue;
+                    }
+
+                    // Preserve the original creature atlas so the model keeps
+                    // its scales, teeth and facial detail, then recolor it into
+                    // an original dark-jade tokusatsu kaiju skin.
+                    var skin = new Color(0.38f, 0.52f, 0.29f, 1f);
+                    if (material.HasProperty("_Color")) material.SetColor("_Color", skin);
+                    if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", skin);
+                    if (material.HasProperty("_EmissionColor")) material.SetColor("_EmissionColor", new Color(0.012f, 0.035f, 0.022f));
+                    if (material.HasProperty("_RimColor")) material.SetColor("_RimColor", new Color(0.72f, 0.12f, 0.055f));
+                    if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0.16f);
+                    if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", 0.42f);
+                    EditorUtility.SetDirty(material);
+                }
+                targetRenderer.sharedMaterials = assigned;
+            }
+        }
+
+        private static void AddRockhornKaijuFeatures(Transform modelRoot, MaterialPalette materials)
+        {
+            var headBone = FindDescendant(modelRoot, "Head");
+            if (headBone != null)
+            {
+                CreateBoneAccessory("Kaiju Brow Armor", PrimitiveType.Cube, modelRoot, headBone, new Vector3(0f, 0.24f, 0.36f), new Vector3(0.68f, 0.19f, 0.2f), materials.MonsterArmor, new Vector3(7f, 0f, 0f));
+                CreateBoneAccessory("Kaiju Crown Horn", PrimitiveType.Cylinder, modelRoot, headBone, new Vector3(0f, 0.5f, 0.05f), new Vector3(0.17f, 0.75f, 0.17f), materials.MonsterArmor, new Vector3(-28f, 0f, 0f));
+                CreateBoneAccessory("Kaiju Horn Left", PrimitiveType.Cylinder, modelRoot, headBone, new Vector3(-0.38f, 0.35f, 0.02f), new Vector3(0.15f, 0.58f, 0.15f), materials.MonsterArmor, new Vector3(0f, 0f, -42f));
+                CreateBoneAccessory("Kaiju Horn Right", PrimitiveType.Cylinder, modelRoot, headBone, new Vector3(0.38f, 0.35f, 0.02f), new Vector3(0.15f, 0.58f, 0.15f), materials.MonsterArmor, new Vector3(0f, 0f, 42f));
+                CreateBoneAccessory("Kaiju Eye Left", PrimitiveType.Cube, modelRoot, headBone, new Vector3(-0.19f, 0.12f, 0.52f), new Vector3(0.14f, 0.045f, 0.028f), materials.MonsterGlow, new Vector3(0f, -7f, -10f));
+                CreateBoneAccessory("Kaiju Eye Right", PrimitiveType.Cube, modelRoot, headBone, new Vector3(0.19f, 0.12f, 0.52f), new Vector3(0.14f, 0.045f, 0.028f), materials.MonsterGlow, new Vector3(0f, 7f, 10f));
+                for (var tooth = 0; tooth < 4; tooth++)
+                {
+                    CreateBoneAccessory(
+                        $"Kaiju Fang {tooth}",
+                        PrimitiveType.Cube,
+                        modelRoot,
+                        headBone,
+                        new Vector3(-0.24f + tooth * 0.16f, -0.13f, 0.58f),
+                        new Vector3(0.035f, 0.11f, 0.035f),
+                        materials.Silver,
+                        new Vector3(0f, 0f, tooth < 2 ? -9f : 9f));
+                }
+            }
+
+            var torsoBone = FindDescendant(modelRoot, "Torso");
+            var abdomenBone = FindDescendant(modelRoot, "Abdomen");
+            if (torsoBone != null)
+            {
+                CreateBoneAccessory("Kaiju Chest Furnace", PrimitiveType.Sphere, modelRoot, torsoBone, new Vector3(0f, 0.02f, 0.48f), new Vector3(0.28f, 0.28f, 0.1f), materials.MonsterGlow);
+                CreateBoneAccessory("Kaiju Dorsal Blade High", PrimitiveType.Cube, modelRoot, torsoBone, new Vector3(0f, 0.2f, -0.45f), new Vector3(0.12f, 0.43f, 0.36f), materials.MonsterArmor, new Vector3(42f, 0f, 0f));
+            }
+            var leftShoulder = FindDescendant(modelRoot, "Shoulder.L");
+            var rightShoulder = FindDescendant(modelRoot, "Shoulder.R");
+            if (leftShoulder != null)
+            {
+                CreateBoneAccessory("Kaiju Shoulder Armor Left", PrimitiveType.Sphere, modelRoot, leftShoulder, Vector3.zero, new Vector3(0.42f, 0.3f, 0.46f), materials.MonsterArmor);
+            }
+            if (rightShoulder != null)
+            {
+                CreateBoneAccessory("Kaiju Shoulder Armor Right", PrimitiveType.Sphere, modelRoot, rightShoulder, Vector3.zero, new Vector3(0.42f, 0.3f, 0.46f), materials.MonsterArmor);
+            }
+            if (abdomenBone != null)
+            {
+                CreateBoneAccessory("Kaiju Dorsal Blade Low", PrimitiveType.Cube, modelRoot, abdomenBone, new Vector3(0f, 0.02f, -0.38f), new Vector3(0.1f, 0.34f, 0.3f), materials.MonsterArmor, new Vector3(42f, 0f, 0f));
             }
         }
 
@@ -825,7 +1005,7 @@ namespace MonsterPlanet3D.EditorTools
             cameraObject.transform.position = new Vector3(-1.4f, 5.6f, -10.8f);
             cameraObject.transform.LookAt(hero.position + Vector3.up * 1.3f);
             var camera = cameraObject.AddComponent<UnityEngine.Camera>();
-            camera.fieldOfView = 58f;
+            camera.fieldOfView = 52f;
             camera.nearClipPlane = 0.08f;
             camera.farClipPlane = 160f;
             camera.allowHDR = true;
