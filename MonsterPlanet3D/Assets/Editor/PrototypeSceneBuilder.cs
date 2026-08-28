@@ -602,7 +602,7 @@ namespace MonsterPlanet3D.EditorTools
             visible.transform.localScale = Vector3.one * 1.46f;
             foreach (var animator in visible.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
             foreach (var collider in visible.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(collider);
-            StyleGuardianBaseModel(visible, materials);
+            StyleGuardianBaseModel(visible, materials, skinIndex);
 
             var motionSource = PrefabUtility.InstantiatePrefab(motionPrefab, wrapper.transform) as GameObject;
             if (motionSource == null) motionSource = Object.Instantiate(motionPrefab, wrapper.transform);
@@ -635,8 +635,9 @@ namespace MonsterPlanet3D.EditorTools
             return driver;
         }
 
-        private static void StyleGuardianBaseModel(GameObject visible, MaterialPalette materials)
+        private static void StyleGuardianBaseModel(GameObject visible, MaterialPalette materials, int skinIndex)
         {
+            var suitMaterial = GetOrCreateGuardianSuitMaterial(skinIndex);
             foreach (var targetRenderer in visible.GetComponentsInChildren<Renderer>(true))
             {
                 if (targetRenderer.name.IndexOf("Eyebrow", System.StringComparison.OrdinalIgnoreCase) >= 0)
@@ -647,11 +648,79 @@ namespace MonsterPlanet3D.EditorTools
 
                 var material = targetRenderer.name.IndexOf("Eye", System.StringComparison.OrdinalIgnoreCase) >= 0
                     ? materials.HeroGlow
-                    : materials.Silver;
+                    : suitMaterial;
                 var assigned = new Material[Mathf.Max(1, targetRenderer.sharedMaterials.Length)];
                 for (var i = 0; i < assigned.Length; i++) assigned[i] = material;
                 targetRenderer.sharedMaterials = assigned;
             }
+        }
+
+        private static Material GetOrCreateGuardianSuitMaterial(int skinIndex)
+        {
+            var names = new[] { "GuardianAuroraSuit", "GuardianNovaSuit", "GuardianSolarSuit" };
+            var primaryColors = new[]
+            {
+                new Color(0.015f, 0.38f, 0.96f),
+                new Color(0.2f, 0.08f, 0.92f),
+                new Color(0.94f, 0.035f, 0.018f)
+            };
+            var accentColors = new[]
+            {
+                new Color(0.72f, 0.94f, 1f),
+                new Color(0.42f, 0.82f, 1f),
+                new Color(1f, 0.68f, 0.08f)
+            };
+
+            skinIndex = Mathf.Clamp(skinIndex, 0, names.Length - 1);
+            var path = $"{MaterialFolder}/{names[skinIndex]}.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            var shader = RequireGuardianSuitShader();
+            if (material == null)
+            {
+                material = new Material(shader) { name = names[skinIndex] };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else
+            {
+                material.shader = shader;
+            }
+
+            material.SetColor("_Color", new Color(0.48f, 0.54f, 0.64f));
+            if (material.HasProperty("_PrimaryColor")) material.SetColor("_PrimaryColor", primaryColors[skinIndex]);
+            if (material.HasProperty("_SecondaryColor")) material.SetColor("_SecondaryColor", accentColors[skinIndex]);
+            if (material.HasProperty("_RimColor")) material.SetColor("_RimColor", Color.Lerp(primaryColors[skinIndex], Color.white, 0.28f));
+            if (material.HasProperty("_EmissionColor")) material.SetColor("_EmissionColor", primaryColors[skinIndex] * 2.2f);
+            if (material.HasProperty("_PatternVariant")) material.SetFloat("_PatternVariant", skinIndex);
+            if (material.HasProperty("_DetailStrength")) material.SetFloat("_DetailStrength", skinIndex == 2 ? 0.72f : 0.82f);
+            if (material.HasProperty("_EnergyStrength")) material.SetFloat("_EnergyStrength", skinIndex == 1 ? 1.18f : 1f);
+            if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0.68f);
+            if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", 0.76f);
+            if (material.HasProperty("_MainTex"))
+            {
+                material.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Textures/guardian-suit-tech-v1.png"));
+                material.SetTextureScale("_MainTex", new Vector2(3.4f, 3.4f));
+            }
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        private static Shader RequireGuardianSuitShader()
+        {
+            var shader = Shader.Find("MonsterPlanet/GuardianSuit");
+            if (shader == null)
+            {
+                throw new BuildFailedException("Guardian suit shader was not imported: Assets/Shaders/GuardianSuit.shader");
+            }
+
+            if (!shader.isSupported)
+            {
+                var diagnostics = ShaderUtil.GetShaderMessages(shader)
+                    .Select(message => $"{message.severity}: {message.message} ({message.platform}, line {message.line})");
+                throw new BuildFailedException(
+                    "Guardian suit shader is unsupported for the active build target.\n" + string.Join("\n", diagnostics));
+            }
+
+            return shader;
         }
 
         private static void AddLightGuardianArmor(Transform modelRoot, MaterialPalette materials, int skinIndex)
@@ -690,26 +759,6 @@ namespace MonsterPlanet3D.EditorTools
                 CreateBoneAccessory("Light Belt Core", PrimitiveType.Sphere, modelRoot, pelvisBone, new Vector3(0f, 0.11f, 0.245f), new Vector3(0.075f, 0.075f, 0.035f), glow);
             }
 
-            AddGuardianJointArmor(modelRoot, "upperarm_l", "Light Shoulder Left", new Vector3(0.17f, 0.13f, 0.17f), primary);
-            AddGuardianJointArmor(modelRoot, "upperarm_r", "Light Shoulder Right", new Vector3(0.17f, 0.13f, 0.17f), primary);
-            AddGuardianJointArmor(modelRoot, "forearm_l", "Light Bracer Left", new Vector3(0.13f, 0.17f, 0.13f), primary);
-            AddGuardianJointArmor(modelRoot, "forearm_r", "Light Bracer Right", new Vector3(0.13f, 0.17f, 0.13f), primary);
-            AddGuardianJointArmor(modelRoot, "calf_l", "Light Knee Left", new Vector3(0.15f, 0.12f, 0.16f), primary);
-            AddGuardianJointArmor(modelRoot, "calf_r", "Light Knee Right", new Vector3(0.15f, 0.12f, 0.16f), primary);
-        }
-
-        private static void AddGuardianJointArmor(
-            Transform modelRoot,
-            string boneName,
-            string accessoryName,
-            Vector3 scale,
-            Material material)
-        {
-            var bone = FindDescendant(modelRoot, boneName);
-            if (bone != null)
-            {
-                CreateBoneAccessory(accessoryName, PrimitiveType.Sphere, modelRoot, bone, Vector3.zero, scale, material);
-            }
         }
 
         private static GameObject CreateBoneAccessory(

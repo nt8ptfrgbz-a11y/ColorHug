@@ -108,7 +108,9 @@ namespace MonsterPlanet3D.Player
 
             ReadEditorActions();
 
-            var input = movementJoystick != null ? movementJoystick.Value : ReadKeyboardMovement();
+            var joystickInput = movementJoystick != null ? movementJoystick.Value : Vector2.zero;
+            var keyboardInput = ReadKeyboardMovement();
+            var input = joystickInput.sqrMagnitude > 0.0025f ? joystickInput : keyboardInput;
             var desiredDirection = CameraRelativeDirection(input);
             var actionSpeedMultiplier = _attackRoutine != null ? 0.24f : ((_skillRoutine != null || _staggerRoutine != null) ? 0f : 1f);
 
@@ -499,7 +501,9 @@ namespace MonsterPlanet3D.Player
 
         private IEnumerator DodgeRoutine()
         {
-            var input = movementJoystick != null ? movementJoystick.Value : ReadKeyboardMovement();
+            var joystickInput = movementJoystick != null ? movementJoystick.Value : Vector2.zero;
+            var keyboardInput = ReadKeyboardMovement();
+            var input = joystickInput.sqrMagnitude > 0.0025f ? joystickInput : keyboardInput;
             var dodgeDirection = CameraRelativeDirection(input);
             if (dodgeDirection.sqrMagnitude < 0.01f)
             {
