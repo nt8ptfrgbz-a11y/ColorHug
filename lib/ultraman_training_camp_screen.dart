@@ -4,10 +4,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'fruit_slice_game_screen.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
 import 'light_guardian_screen.dart';
-import 'monster_planet_game.dart';
 import 'ultra_assets.dart';
 
 class UltramanTrainingCampScreen extends StatelessWidget {
@@ -20,7 +20,7 @@ class UltramanTrainingCampScreen extends StatelessWidget {
   final IslandProgress progress;
   final GameAudioController audio;
 
-  static const _welcome = '欢迎来到奥特曼训练营！先去怪兽星球操控奥特战士战斗，也可以挑战怪兽雷达、光线发射、宇宙救援和能量护盾。';
+  static const _welcome = '欢迎来到奥特曼训练营！先用一根手指玩水果切切乐，也可以挑战怪兽雷达、光线发射、宇宙救援和能量护盾。';
 
   void _open(BuildContext context, Widget screen) {
     unawaited(audio.play(GameSound.tap));
@@ -74,17 +74,16 @@ class UltramanTrainingCampScreen extends StatelessWidget {
                             childAspectRatio: columns == 2 ? 2.65 : 2.55,
                             children: [
                               _TrainingCard(
-                                key: const ValueKey(
-                                  'ultra-game-monster-planet',
-                                ),
-                                title: '怪兽星球',
-                                subtitle: '用摇杆操控奥特战士，移动、跳跃并和怪兽战斗',
-                                badge: '${progress.monsterPlanetWins}/3',
-                                preview: const UltraFighterImage(index: 0),
-                                color: const Color(0xFFE14F61),
+                                key: const ValueKey('ultra-game-fruit-slice'),
+                                title: '水果切切乐',
+                                subtitle: '一根手指划过大水果，漏掉不扣分',
+                                badge:
+                                    '${progress.fruitSliceWins}/${fruitSliceLevels.length}',
+                                preview: const _FruitSlicePreview(),
+                                color: const Color(0xFFE84C75),
                                 onTap: () => _open(
                                   context,
-                                  MonsterPlanetSelectScreen(
+                                  FruitSliceGameScreen(
                                     progress: progress,
                                     audio: audio,
                                   ),
@@ -190,7 +189,7 @@ class _CampWelcome extends StatelessWidget {
           const SizedBox(width: 9),
           const Expanded(
             child: Text(
-              '选择怪兽星球或一项训练，奥特曼会用声音告诉你怎么做！',
+              '先试试一根手指就能玩的水果切切乐，英雄会用声音为你加油！',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 13,
@@ -203,6 +202,46 @@ class _CampWelcome extends StatelessWidget {
             text: UltramanTrainingCampScreen._welcome,
             voice: GameVoice.hero,
             foregroundColor: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FruitSlicePreview extends StatelessWidget {
+  const _FruitSlicePreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.horizontal(left: Radius.circular(23)),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/fruit_game/fruit-training-bg.png',
+            fit: BoxFit.cover,
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x001C65A3), Color(0x66133C76)],
+              ),
+            ),
+          ),
+          const Center(
+            child: Text(
+              '🍉  🍓\n  🍊',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 27,
+                height: 0.9,
+                shadows: [Shadow(color: Colors.black38, blurRadius: 5)],
+              ),
+            ),
           ),
         ],
       ),

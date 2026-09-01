@@ -5,15 +5,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum GameSound { tap, correct, wrong, discover, complete }
+enum GameSound {
+  tap,
+  correct,
+  wrong,
+  discover,
+  complete,
+  fruitWatermelon,
+  fruitStrawberry,
+  fruitOrange,
+  fruitKiwi,
+  fruitApple,
+  fruitPineapple,
+  fruitBlueberry,
+  fruitBanana,
+}
 
-/// Distinct in-game speaking styles. Hero and monster are original character
-/// treatments; they do not imitate a specific performer.
-enum GameVoice { narrator, hero, monster }
+/// Distinct original in-game speaking styles; none imitate a specific person.
+enum GameVoice { narrator, child, hero, monster }
 
 const _speechProfiles =
     <GameVoice, ({double rate, double pitch, double volume})>{
       GameVoice.narrator: (rate: 0.54, pitch: 1.02, volume: 0.96),
+      GameVoice.child: (rate: 0.56, pitch: 1.16, volume: 0.66),
       GameVoice.hero: (rate: 0.51, pitch: 0.84, volume: 1.00),
       GameVoice.monster: (rate: 0.47, pitch: 0.58, volume: 1.00),
     };
@@ -43,6 +57,14 @@ class GameAudioController extends ChangeNotifier {
     GameSound.wrong: 'audio/wrong.wav',
     GameSound.discover: 'audio/discover.wav',
     GameSound.complete: 'audio/complete.wav',
+    GameSound.fruitWatermelon: 'audio/fruit_slice_watermelon.wav',
+    GameSound.fruitStrawberry: 'audio/fruit_slice_strawberry.wav',
+    GameSound.fruitOrange: 'audio/fruit_slice_orange.wav',
+    GameSound.fruitKiwi: 'audio/fruit_slice_kiwi.wav',
+    GameSound.fruitApple: 'audio/fruit_slice_apple.wav',
+    GameSound.fruitPineapple: 'audio/fruit_slice_pineapple.wav',
+    GameSound.fruitBlueberry: 'audio/fruit_slice_blueberry.wav',
+    GameSound.fruitBanana: 'audio/fruit_slice_banana.wav',
   };
 
   final FlutterTts? _speech;
@@ -206,7 +228,7 @@ class GameAudioController extends ChangeNotifier {
         // Continue applying the remaining supported speech parameters.
       }
     }
-    final profile = _speechProfiles[voice]!;
+    final profile = speechProfileFor(voice);
     try {
       await speech.setSpeechRate(profile.rate);
     } catch (_) {
@@ -247,6 +269,11 @@ class GameAudioController extends ChangeNotifier {
     return best;
   }
 
+  @visibleForTesting
+  static ({double rate, double pitch, double volume}) speechProfileFor(
+    GameVoice voice,
+  ) => _speechProfiles[voice]!;
+
   static int _voiceScore(Map<String, String> voice, GameVoice role) {
     final locale = (voice['locale'] ?? '').toLowerCase().replaceAll('_', '-');
     final name = (voice['name'] ?? '').toLowerCase();
@@ -275,6 +302,15 @@ class GameAudioController extends ChangeNotifier {
         'shelley',
         'meijia',
       ],
+      GameVoice.child: [
+        'xiaoxiao',
+        'xiaoyi',
+        'tingting',
+        'sandy',
+        'flo',
+        'shelley',
+        'meijia',
+      ],
       GameVoice.hero: [
         'eddy',
         'reed',
@@ -290,8 +326,14 @@ class GameAudioController extends ChangeNotifier {
     final preferredIndex = names.indexWhere(name.contains);
     if (preferredIndex >= 0) score += 240 - preferredIndex * 22;
 
-    if (role == GameVoice.narrator && gender.contains('female')) score += 25;
-    if (role != GameVoice.narrator && gender.contains('male')) score += 55;
+    if ((role == GameVoice.narrator || role == GameVoice.child) &&
+        gender.contains('female')) {
+      score += role == GameVoice.child ? 45 : 25;
+    }
+    if ((role == GameVoice.hero || role == GameVoice.monster) &&
+        gender.contains('male')) {
+      score += 55;
+    }
     if (voice['network_required'] == '0') score += 15;
     return score;
   }

@@ -41,6 +41,12 @@ void main() {
         'gender': 'female',
       },
       {
+        'name': 'Xiaoxiao',
+        'locale': 'zh-CN',
+        'quality': 'enhanced',
+        'gender': 'female',
+      },
+      {
         'name': 'Eddy',
         'locale': 'zh-CN',
         'quality': 'enhanced',
@@ -63,12 +69,20 @@ void main() {
       'Tingting',
     );
     expect(
+      GameAudioController.preferredVoiceFor(voices, GameVoice.child)?['name'],
+      'Xiaoxiao',
+    );
+    expect(
       GameAudioController.preferredVoiceFor(voices, GameVoice.hero)?['name'],
       'Eddy',
     );
     expect(
       GameAudioController.preferredVoiceFor(voices, GameVoice.monster)?['name'],
       'Rocko',
+    );
+    expect(
+      GameAudioController.speechProfileFor(GameVoice.child).volume,
+      lessThan(GameAudioController.speechProfileFor(GameVoice.hero).volume),
     );
   });
 }

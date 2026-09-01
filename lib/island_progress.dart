@@ -219,6 +219,7 @@ class IslandProgress extends ChangeNotifier {
   int get monsterRadarWins => _rewardCount('ultra-radar-');
   int get beamTrainingWins => _rewardCount('ultra-beam-');
   int get spaceRescueWins => _rewardCount('ultra-rescue-');
+  int get fruitSliceWins => _rewardCount('ultra-fruit-');
   int get monsterPlanetWins => _rewardCount('monster-planet-');
   int get completedColorChallenges => _rewardTokens
       .where((token) => token.startsWith('color-challenge-'))

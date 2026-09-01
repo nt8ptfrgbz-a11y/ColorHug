@@ -32,15 +32,15 @@
 - **彩虹修复师**：挑战 100 个可选关卡，在 20 张主题地图中用点击、拖拽、听声与混色玩法探索 16 种颜色。
 - **魔法画室**：选择颜色和画笔粗细自由绘画，完成后记录自己的创作次数。
 - **色彩图鉴**：点亮 26 张收藏卡片，阅读颜色配方和有趣的小秘密。
-- **怪兽星球实时战斗**：从三位不同属性的奥特战士中选择一位，用虚拟摇杆移动、跳跃、拳击、躲避四种轮换怪兽，并积攒能量释放光线必杀。
-- **奥特曼训练营**：实时战斗、怪兽雷达、光线发射、宇宙救援和能量护盾五种玩法，共 31 个独立进度。
+- **水果切切乐**：为三岁儿童设计的一指玩法，拥有 30 个可选择关卡、清脆实录切果音效、果汁画、连切慢动作和彩虹能量果，漏掉水果也不扣分。
+- **奥特曼训练营**：水果切切乐、怪兽雷达、光线发射、宇宙救援和能量护盾五种玩法，共 58 个独立进度。
 - **素材化游戏画面**：高清奥特曼立绘、可爱怪兽、月球基地与救援场景全部内置，无需联网。
 - **语音陪玩**：进入玩法会主动用中文讲解步骤，关键操作也会说出鼓励或下一步提示，不识字也能独立探索。
 - **声音反馈**：点击扬声器可以重复收听；点击、答对、再试、发现和完成都有不同音效，总声音开关会记住设置。
 - **自动保存成长**：星星、图鉴、修复进度和作品数量会保存在本机，下次打开可以继续。
 - **充满即时反馈**：磁吸、呼吸动画、表情、触觉和庆祝效果，让每次探索都有回应。
 - **一套代码，多种屏幕**：界面会适配 macOS、iPad 与 iPhone 的不同尺寸。
-- **APP 内嵌 3D 战斗**：iPhone 版会从“怪兽星球”入口直接打开 Unity 6.3 全屏战斗，包含三位可选战士、蒙皮动画、连击、闪避、怪兽预警、光线技能、音效和手机手柄；退出后会回到原来的 Flutter 训练营。
+- **低龄友好操作**：核心训练不用摇杆和组合按键，孩子只需点击或用一根手指滑动。
 
 ## 🖼️ 界面预览
 
@@ -114,16 +114,12 @@
   <sub>每个玩法都有中文语音指令、大图标和独立进度</sub>
 </p>
 
-<table>
-  <tr>
-    <td width="50%" align="center"><img alt="颜色抱抱 macOS 怪兽星球角色选择" src="./docs/images/color-hug-monster-select.png"></td>
-    <td width="50%" align="center"><img alt="颜色抱抱 macOS 怪兽星球实时战斗" src="./docs/images/color-hug-monster-battle.png"></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>🦸 三位奥特战士</strong><br><sub>均衡、速度、力量三种属性与独立首次胜利奖励</sub></td>
-    <td align="center"><strong>🪐 怪兽星球</strong><br><sub>摇杆移动、跳跃、拳击蓄能与光线必杀</sub></td>
-  </tr>
-</table>
+<p align="center">
+  <img width="86%" alt="颜色抱抱水果切切乐训练场景" src="./assets/fruit_game/fruit-training-bg.png">
+  <br>
+  <strong>🍉 水果切切乐</strong><br>
+  <sub>一根手指划过大水果，漏掉不扣分，没有炸弹和失败惩罚</sub>
+</p>
 
 <table>
   <tr>
@@ -161,7 +157,7 @@
 4. 完成线索与修复任务收集星星，混色和绘画则会解锁更多颜色。
 5. 打开色彩图鉴，点击卡片听一听已经发现的颜色和它们的小秘密。
 
-在怪兽星球中，拖动左下角摇杆控制角色，右下角依次是跳跃、拳击和光线按钮。跳跃可以躲避怪兽攻击，拳击命中或成功闪避都会积攒能量；怪兽会自动追击，所以需要边移动边判断攻击距离。
+在水果切切乐中，用一根手指划过画面中央的练习西瓜即可开始。之后水果会缓慢从训练场中飞出；漏掉不会扣分，收集到本关目标数量就能获得一颗星星并解锁下一关。顶部的关卡按钮可以重玩已经解锁的 30 个关卡。
 
 ## 🚀 快速开始
 
@@ -185,24 +181,6 @@ flutter run -d macos
 flutter devices
 flutter run -d <device-id>
 ```
-
-> Unity 3D 怪兽星球使用真机版 `UnityFramework`，不走 iOS 模拟器；macOS 和其他平台仍保留原有的 Flame 2D 战斗作为兼容玩法。
-
-### 更新 3D 怪兽星球
-
-平时运行 Flutter APP 不需要打开 Unity。只有修改了 `MonsterPlanet3D` 的场景、角色、脚本或素材后，才需要重新生成 iOS 游戏库：
-
-1. 在 Unity Hub 的 **Installs** 中给 Unity 6.3.22f1 安装 **iOS Build Support**。
-2. 执行一键导出脚本，然后重新运行 Flutter APP。
-
-```bash
-./scripts/export_unity_ios.sh
-flutter run -d <device-id>
-```
-
-若只想在 Unity 编辑器预览，可打开 `MonsterPlanet3D`；项目会自动进入 `MonsterPlanetPrototype` 场景，直接点击 Play。Mac 上可用 `WASD` 移动、`Space` 跳跃、`J` 连击、`K` 闪避、`L` 光线技能。手机端使用左侧摇杆和右侧技能按钮，普通话语音会提示关键步骤。
-
-3D 游戏使用经过挑选的 CC0 蒙皮模型，资源源码约 7 MB；约 1.9 GB 的 `MonsterPlanet3D/Library` 缓存和约 595 MB 的 `ios/unityLibrary` 导出目录都已忽略，不会提交到 Git。更多说明与素材来源见 [`MonsterPlanet3D/README.md`](MonsterPlanet3D/README.md) 和 [`MonsterPlanet3D/ATTRIBUTIONS.md`](MonsterPlanet3D/ATTRIBUTIONS.md)。
 
 ## ✅ 验证
 
@@ -240,15 +218,13 @@ test/
 ├── island_features_test.dart    # 彩虹小岛与新玩法流程
 ├── game_audio_test.dart         # 语音与音效控制逻辑
 ├── island_progress_test.dart    # 共享奖励与发现进度
-├── monster_planet_game_test.dart # 移动、伤害、必杀与怪兽轮换
+├── fruit_slice_game_test.dart   # 划动命中、30 关配置与水果音效映射
 ├── color_mixer_test.dart        # 混色规则
 └── color_challenges_test.dart   # 任务题库
 
-assets/audio/                    # 提示音与拳击、跳跃、受击、光线战斗音效
+assets/audio/                    # 点击、答题、发现与完成提示音
+assets/fruit_game/               # 水果精灵图与训练场背景
 assets/ultra/                    # 离线角色、怪兽、星球背景、技能特效与救援素材
-
-MonsterPlanet3D/                # 内嵌 iPhone APP 的 Unity 6.3 URP 3D 游戏源码
-scripts/                        # Unity iOS 一键导出与 Xcode 自动链接脚本
 ```
 
 ## 🎨 素材说明

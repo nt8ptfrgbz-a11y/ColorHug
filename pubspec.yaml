@@ -70,6 +70,7 @@ flutter:
 
   assets:
     - assets/audio/
+    - assets/fruit_game/
     - assets/ultra/
 
   # To add assets to your application, add an assets section, like this:

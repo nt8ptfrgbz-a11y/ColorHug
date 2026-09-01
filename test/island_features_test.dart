@@ -87,7 +87,7 @@ void main() {
     await _openTrainingCamp(tester);
 
     for (final game in [
-      'ultra-game-monster-planet',
+      'ultra-game-fruit-slice',
       'ultra-game-radar',
       'ultra-game-beam',
       'ultra-game-rescue',
@@ -270,7 +270,7 @@ void main() {
 
     expect(find.text('🚀 奥特曼训练营'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('ultra-game-monster-planet')),
+      find.byKey(const ValueKey('ultra-game-fruit-slice')),
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('ultra-game-radar')), findsOneWidget);
@@ -280,7 +280,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('怪兽星球可以选择三位英雄并进入实时战斗', (tester) async {
+  testWidgets('水果切切乐只需一根手指且漏掉不扣分', (tester) async {
     final audio = GameAudioController.silent();
     tester.view.physicalSize = const Size(1024, 768);
     tester.view.devicePixelRatio = 1;
@@ -293,28 +293,36 @@ void main() {
     await _openIsland(tester);
     await _openTrainingCamp(tester);
 
-    final entry = find.byKey(const ValueKey('ultra-game-monster-planet'));
+    final entry = find.byKey(const ValueKey('ultra-game-fruit-slice'));
     await tester.ensureVisible(entry);
     await tester.tap(entry);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.byKey(const ValueKey('fighter-spark')), findsOneWidget);
-    expect(find.byKey(const ValueKey('fighter-gale')), findsOneWidget);
-    expect(find.byKey(const ValueKey('fighter-nova')), findsOneWidget);
+    expect(find.text('🍉 水果切切乐'), findsOneWidget);
+    expect(find.textContaining('漏掉不扣分'), findsOneWidget);
+    expect(audio.lastSpokenText, contains('一根手指'));
+    expect(audio.lastVoice, GameVoice.child);
 
-    await tester.tap(find.byKey(const ValueKey('fighter-gale')));
-    await tester.pump(const Duration(milliseconds: 120));
-    expect(audio.lastSpokenText, contains('疾风战士'));
-    expect(audio.lastVoice, GameVoice.hero);
+    final arena = find.byKey(const ValueKey('fruit-slice-arena'));
+    final center = tester.getCenter(arena);
+    await tester.dragFrom(center - const Offset(120, 0), const Offset(240, 0));
+    await tester.pump(const Duration(milliseconds: 150));
 
-    await tester.tap(find.byKey(const ValueKey('monster-planet-start')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1000));
-
-    expect(find.byKey(const ValueKey('monster-planet-game')), findsOneWidget);
-    expect(find.text('疾风战士'), findsOneWidget);
+    expect(find.text('🍉 1/6'), findsOneWidget);
+    expect(audio.lastSound, GameSound.fruitWatermelon);
     expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const ValueKey('fruit-level-picker')));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('🗺️ 选择水果关卡'), findsOneWidget);
+    expect(find.byKey(const ValueKey('fruit-select-level-0')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('fruit-select-level-29')),
+      260,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.byKey(const ValueKey('fruit-select-level-29')), findsOneWidget);
   });
 
   testWidgets('怪兽雷达根据语音特征找到目标', (tester) async {

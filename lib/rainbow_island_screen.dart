@@ -171,9 +171,9 @@ class RainbowIslandScreen extends StatelessWidget {
                                       width: cardWidth,
                                       icon: '🦸',
                                       title: '奥特曼训练营',
-                                      subtitle: '摇杆战斗、怪兽雷达、光线发射等五种玩法',
+                                      subtitle: '切水果、怪兽雷达、光线发射等五种趣味玩法',
                                       badge:
-                                          '${progress.monsterPlanetWins + progress.monsterRadarWins + progress.beamTrainingWins + progress.spaceRescueWins + progress.guardianWins}/31 任务',
+                                          '${progress.fruitSliceWins + progress.monsterRadarWins + progress.beamTrainingWins + progress.spaceRescueWins + progress.guardianWins}/58 任务',
                                       colors: const [
                                         Color(0xFF3446A8),
                                         Color(0xFFE54E8B),

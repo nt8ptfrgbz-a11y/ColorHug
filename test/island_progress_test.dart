@@ -43,18 +43,21 @@ void main() {
     expect(progress.stars, 2);
   });
 
-  test('奥特曼训练的三种进度分别记录且不重复奖励', () {
+  test('奥特曼训练的四种进度分别记录且不重复奖励', () {
     final progress = IslandProgress();
 
     expect(progress.recordUltraTrainingWin('radar', 0), isTrue);
     expect(progress.recordUltraTrainingWin('radar', 0), isFalse);
     expect(progress.recordUltraTrainingWin('beam', 0), isTrue);
     expect(progress.recordUltraTrainingWin('rescue', 0), isTrue);
+    expect(progress.recordUltraTrainingWin('fruit', 0), isTrue);
+    expect(progress.recordUltraTrainingWin('fruit', 0), isFalse);
 
     expect(progress.monsterRadarWins, 1);
     expect(progress.beamTrainingWins, 1);
     expect(progress.spaceRescueWins, 1);
-    expect(progress.stars, 3);
+    expect(progress.fruitSliceWins, 1);
+    expect(progress.stars, 4);
   });
 
   test('怪兽星球为三位英雄分别记录首次胜利', () {
