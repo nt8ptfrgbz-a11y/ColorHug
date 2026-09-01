@@ -195,6 +195,7 @@ class _LightGuardianScreenState extends State<LightGuardianScreen>
       widget.audio.announce(
         _message,
         sound: correct ? GameSound.complete : GameSound.wrong,
+        voice: correct ? GameVoice.hero : GameVoice.monster,
       ),
     );
   }
@@ -207,7 +208,7 @@ class _LightGuardianScreenState extends State<LightGuardianScreen>
       _message = '新的守护任务来了！观察护盾，再选择对比色能量。';
     });
     _beamController.reset();
-    unawaited(widget.audio.announce(_mission.prompt));
+    unawaited(widget.audio.announce(_mission.prompt, voice: GameVoice.hero));
   }
 
   @override
@@ -216,6 +217,7 @@ class _LightGuardianScreenState extends State<LightGuardianScreen>
     return NarrateOnMount(
       audio: widget.audio,
       text: narration,
+      voice: GameVoice.hero,
       child: Scaffold(
         backgroundColor: const Color(0xFF0A1231),
         body: DecoratedBox(
@@ -385,6 +387,7 @@ class _GuardianControls extends StatelessWidget {
               RepeatVoiceButton(
                 audio: audio,
                 text: solved || selected != null ? message : mission.prompt,
+                voice: GameVoice.hero,
               ),
               if (solved)
                 IconButton.filled(

@@ -1,10 +1,14 @@
 import 'package:color_hug/game_audio.dart';
 import 'package:color_hug/island_progress.dart';
 import 'package:color_hug/main.dart';
+import 'package:color_hug/rainbow_repair_levels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Future<void> _pumpDesktopApp(WidgetTester tester) async {
+Future<void> _pumpDesktopApp(
+  WidgetTester tester, {
+  GameAudioController? audio,
+}) async {
   tester.view.physicalSize = const Size(1024, 768);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -12,7 +16,7 @@ Future<void> _pumpDesktopApp(WidgetTester tester) async {
   await tester.pumpWidget(
     ColorHugApp(
       progress: IslandProgress(),
-      audio: GameAudioController.silent(),
+      audio: audio ?? GameAudioController.silent(),
     ),
   );
   await tester.pump(const Duration(milliseconds: 80));
@@ -156,21 +160,69 @@ void main() {
     expect(audio.lastSound, GameSound.correct);
   });
 
-  testWidgets('彩虹修复师可以依次恢复整座花园', (tester) async {
+  testWidgets('彩虹修复师完成五关后会解锁下一张地图', (tester) async {
     await _pumpDesktopApp(tester);
     await _openIsland(tester);
     await tester.tap(find.byKey(const ValueKey('activity-repair')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    for (final color in ['黄色', '蓝色', '绿色', '红色']) {
-      await tester.tap(find.byKey(ValueKey('repair-color-$color')));
-      await tester.pump(const Duration(milliseconds: 1200));
-    }
+    expect(find.text('👆 点一点'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('repair-color-黄色')));
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(find.text('🖐️ 拖一拖'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('repair-color-蓝色')));
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(find.text('🧪 调一调'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('repair-mix-黄色')));
+    await tester.tap(find.byKey(const ValueKey('repair-mix-蓝色')));
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(find.text('👂 听声音'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('repair-color-红色')));
+    await tester.pump(const Duration(milliseconds: 1200));
+    await tester.tap(find.byKey(const ValueKey('repair-color-紫色')));
+    await tester.pump(const Duration(milliseconds: 1200));
 
-    expect(find.byKey(const ValueKey('repair-completed')), findsOneWidget);
-    expect(find.textContaining('整座花园都恢复颜色'), findsOneWidget);
-    expect(find.textContaining('⭐ 4'), findsOneWidget);
+    expect(find.byKey(const ValueKey('repair-map-completed')), findsOneWidget);
+    expect(find.textContaining('晨光花园修复完成'), findsOneWidget);
+    expect(find.textContaining('⭐ 5'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('repair-next-map')));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const ValueKey('repair-map-1')), findsOneWidget);
+    expect(find.textContaining('扶起椰树'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('彩虹修复师会同步进度并允许选择已解锁关卡', (tester) async {
+    tester.view.physicalSize = const Size(1024, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final progress = IslandProgress();
+    final audio = GameAudioController.silent();
+    await tester.pumpWidget(ColorHugApp(progress: progress, audio: audio));
+    await tester.pump(const Duration(milliseconds: 80));
+    await _openIsland(tester);
+    await tester.tap(find.byKey(const ValueKey('activity-repair')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    progress.repairPart(7, repairTasks[6].colorName);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('repair-step-7')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('repair-level-picker')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('🗺️ 选择关卡'), findsOneWidget);
+    expect(find.byKey(const ValueKey('repair-select-level-2')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('repair-select-level-2')));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byKey(const ValueKey('repair-step-2')), findsOneWidget);
+    expect(find.text('第3关 · 种出草地'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -254,6 +306,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('fighter-gale')));
     await tester.pump(const Duration(milliseconds: 120));
     expect(audio.lastSpokenText, contains('疾风战士'));
+    expect(audio.lastVoice, GameVoice.hero);
 
     await tester.tap(find.byKey(const ValueKey('monster-planet-start')));
     await tester.pump();
@@ -265,7 +318,8 @@ void main() {
   });
 
   testWidgets('怪兽雷达根据语音特征找到目标', (tester) async {
-    await _pumpDesktopApp(tester);
+    final audio = GameAudioController.silent();
+    await _pumpDesktopApp(tester, audio: audio);
     await _openIsland(tester);
     await _openTrainingCamp(tester);
     await tester.tap(find.byKey(const ValueKey('ultra-game-radar')));
@@ -275,10 +329,12 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('radar-monster-1')));
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.textContaining('特征不一样'), findsOneWidget);
+    expect(audio.lastVoice, GameVoice.monster);
 
     await tester.tap(find.byKey(const ValueKey('radar-monster-0')));
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.textContaining('雷达锁定成功'), findsOneWidget);
+    expect(audio.lastVoice, GameVoice.hero);
     expect(find.byKey(const ValueKey('radar-next')), findsOneWidget);
     expect(find.textContaining('⭐ 1'), findsOneWidget);
     expect(tester.takeException(), isNull);

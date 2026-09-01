@@ -120,6 +120,7 @@ class _MonsterPlanetSelectScreenState extends State<MonsterPlanetSelectScreen> {
       widget.audio.announce(
         '${fighter.name}，${fighter.title}。${fighter.description}',
         sound: GameSound.tap,
+        voice: GameVoice.hero,
       ),
     );
   }
@@ -150,6 +151,7 @@ class _MonsterPlanetSelectScreenState extends State<MonsterPlanetSelectScreen> {
     return NarrateOnMount(
       audio: widget.audio,
       text: '请选择一位奥特战士。红色能力均衡，蓝色速度最快，金紫色力量最强。点击角色就能听介绍。',
+      voice: GameVoice.hero,
       child: Scaffold(
         backgroundColor: const Color(0xFF07132E),
         body: Stack(
@@ -204,6 +206,7 @@ class _MonsterPlanetSelectScreenState extends State<MonsterPlanetSelectScreen> {
                       RepeatVoiceButton(
                         audio: widget.audio,
                         text: '请选择一位奥特战士。红色能力均衡，蓝色速度最快，金紫色力量最强。',
+                        voice: GameVoice.hero,
                         foregroundColor: Colors.white,
                       ),
                     ],
@@ -501,10 +504,10 @@ class _MonsterPlanetBattleScreenState extends State<MonsterPlanetBattleScreen> {
     setState(() => _paused = !_paused);
     if (_paused) {
       _game.pauseEngine();
-      unawaited(widget.audio.speak('游戏暂停了。'));
+      unawaited(widget.audio.speak('游戏暂停了。', voice: GameVoice.hero));
     } else {
       _game.resumeEngine();
-      unawaited(widget.audio.speak('继续战斗！'));
+      unawaited(widget.audio.speak('继续战斗！', voice: GameVoice.hero));
     }
   }
 
@@ -514,6 +517,7 @@ class _MonsterPlanetBattleScreenState extends State<MonsterPlanetBattleScreen> {
       audio: widget.audio,
       text:
           '战斗开始！拖动左下角摇杆移动。右下角蓝色按钮跳跃躲开怪兽，红色按钮出拳。拳击命中或成功躲避都会积攒能量，黄色能量满了以后，点击闪电按钮发射必杀光线！',
+      voice: GameVoice.hero,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
@@ -1073,7 +1077,11 @@ class MonsterPlanetGame extends FlameGame {
     if (_playerHealth == 0) {
       _syncState(status: BattleStatus.lost);
       unawaited(
-        audio.announce('能量用完啦。没关系，移动躲开怪兽，再试一次吧！', sound: GameSound.wrong),
+        audio.announce(
+          '能量用完啦。没关系，移动躲开怪兽，再试一次吧！',
+          sound: GameSound.wrong,
+          voice: GameVoice.hero,
+        ),
       );
     }
   }
@@ -1120,6 +1128,7 @@ class MonsterPlanetGame extends FlameGame {
       audio.announce(
         '守护成功！${fighter.name}击退了怪兽，获得一颗守护星！',
         sound: GameSound.complete,
+        voice: GameVoice.hero,
       ),
     );
   }
@@ -1137,7 +1146,7 @@ class MonsterPlanetGame extends FlameGame {
     camera.viewfinder.position = Vector2(850, 360);
     resumeEngine();
     _syncState(status: BattleStatus.playing);
-    unawaited(audio.speak('再次出发！先靠近怪兽，再用拳击积攒能量。'));
+    unawaited(audio.speak('再次出发！先靠近怪兽，再用拳击积攒能量。', voice: GameVoice.hero));
   }
 
   void _spawnImpact(Vector2 at) {

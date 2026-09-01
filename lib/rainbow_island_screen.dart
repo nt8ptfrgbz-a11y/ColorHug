@@ -9,6 +9,7 @@ import 'game_audio.dart';
 import 'island_progress.dart';
 import 'magic_studio_screen.dart';
 import 'rainbow_repair_screen.dart';
+import 'rainbow_repair_levels.dart';
 import 'ultraman_training_camp_screen.dart';
 
 class RainbowIslandScreen extends StatelessWidget {
@@ -111,8 +112,9 @@ class RainbowIslandScreen extends StatelessWidget {
                                       width: cardWidth,
                                       icon: '🌈',
                                       title: '彩虹修复师',
-                                      subtitle: '为灰灰的花园找回太阳、河流和花朵',
-                                      badge: '${progress.repairedParts}/4 修复',
+                                      subtitle: '探索20张地图，完成100个颜色修复任务',
+                                      badge:
+                                          '${progress.repairedParts.clamp(0, repairLevelTotal)}/$repairLevelTotal 关',
                                       colors: const [
                                         Color(0xFFFFB34D),
                                         Color(0xFFFF718C),

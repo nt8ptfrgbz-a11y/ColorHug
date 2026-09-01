@@ -32,6 +32,7 @@ class UltramanTrainingCampScreen extends StatelessWidget {
     return NarrateOnMount(
       audio: audio,
       text: _welcome,
+      voice: GameVoice.hero,
       child: AnimatedBuilder(
         animation: progress,
         builder: (context, _) => Scaffold(
@@ -200,6 +201,7 @@ class _CampWelcome extends StatelessWidget {
           RepeatVoiceButton(
             audio: audio,
             text: UltramanTrainingCampScreen._welcome,
+            voice: GameVoice.hero,
             foregroundColor: Colors.white,
           ),
         ],
@@ -452,6 +454,7 @@ class _MonsterRadarScreenState extends State<MonsterRadarScreen> {
       widget.audio.announce(
         _message,
         sound: correct ? GameSound.correct : GameSound.wrong,
+        voice: correct ? GameVoice.hero : GameVoice.monster,
       ),
     );
   }
@@ -463,7 +466,7 @@ class _MonsterRadarScreenState extends State<MonsterRadarScreen> {
       _solved = false;
       _message = '新的雷达信号来了！';
     });
-    unawaited(widget.audio.announce(_mission.clue));
+    unawaited(widget.audio.announce(_mission.clue, voice: GameVoice.hero));
   }
 
   @override
@@ -472,6 +475,7 @@ class _MonsterRadarScreenState extends State<MonsterRadarScreen> {
     return NarrateOnMount(
       audio: widget.audio,
       text: narration,
+      voice: GameVoice.hero,
       child: _GameBackdrop(
         child: Column(
           children: [
@@ -620,6 +624,7 @@ class _BeamTrainingScreenState extends State<BeamTrainingScreen>
       widget.audio.announce(
         _message,
         sound: hit ? GameSound.complete : GameSound.wrong,
+        voice: GameVoice.hero,
       ),
     );
   }
@@ -631,7 +636,7 @@ class _BeamTrainingScreenState extends State<BeamTrainingScreen>
       _message = '新的能量环出现了，准备发射！';
     });
     _cursorController.repeat(reverse: true);
-    unawaited(widget.audio.announce(_message));
+    unawaited(widget.audio.announce(_message, voice: GameVoice.hero));
   }
 
   @override
@@ -639,6 +644,7 @@ class _BeamTrainingScreenState extends State<BeamTrainingScreen>
     return NarrateOnMount(
       audio: widget.audio,
       text: _message,
+      voice: GameVoice.hero,
       child: _GameBackdrop(
         child: Column(
           children: [
@@ -747,7 +753,11 @@ class _BeamTrainingScreenState extends State<BeamTrainingScreen>
                       ),
                     ),
                   ),
-                  RepeatVoiceButton(audio: widget.audio, text: _message),
+                  RepeatVoiceButton(
+                    audio: widget.audio,
+                    text: _message,
+                    voice: GameVoice.hero,
+                  ),
                   const SizedBox(width: 6),
                   if (_solved)
                     FilledButton.icon(
@@ -969,6 +979,7 @@ class _SpaceRescueScreenState extends State<SpaceRescueScreen> {
       widget.audio.announce(
         _message,
         sound: correct ? GameSound.complete : GameSound.wrong,
+        voice: correct ? GameVoice.hero : GameVoice.monster,
       ),
     );
   }
@@ -980,7 +991,7 @@ class _SpaceRescueScreenState extends State<SpaceRescueScreen> {
       _solved = false;
       _message = '新的救援任务来了！';
     });
-    unawaited(widget.audio.announce(_mission.prompt));
+    unawaited(widget.audio.announce(_mission.prompt, voice: GameVoice.hero));
   }
 
   @override
@@ -988,6 +999,7 @@ class _SpaceRescueScreenState extends State<SpaceRescueScreen> {
     return NarrateOnMount(
       audio: widget.audio,
       text: _mission.prompt,
+      voice: GameVoice.hero,
       child: _GameBackdrop(
         child: Column(
           children: [
@@ -1117,7 +1129,7 @@ class _InstructionPanel extends StatelessWidget {
               ),
             ),
           ),
-          RepeatVoiceButton(audio: audio, text: text),
+          RepeatVoiceButton(audio: audio, text: text, voice: GameVoice.hero),
           if (onNext != null)
             IconButton.filled(
               key: ValueKey(nextKey),
