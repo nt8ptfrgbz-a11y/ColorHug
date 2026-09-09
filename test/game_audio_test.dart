@@ -2,6 +2,28 @@ import 'package:color_hug/game_audio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('英语启蒙先讲引导再读英文，后续中文恢复中文语言', () async {
+    final audio = GameAudioController.silent();
+    addTearDown(audio.dispose);
+    await audio.speakLesson('听一听苹果的英语。', 'Apple');
+    expect(audio.lastSpokenText, 'Apple');
+    expect(audio.lastLanguage, GameLanguage.english);
+    await audio.speak('再来做一杯吧！');
+    expect(audio.lastLanguage, GameLanguage.chinese);
+  });
+
+  test('新提示和静音取消尚未完成的双语引导', () async {
+    final audio = GameAudioController.silent();
+    addTearDown(audio.dispose);
+    final obsolete = audio.speakLesson('旧的提示', 'Old');
+    final current = audio.speakEnglish('New');
+    await Future.wait([obsolete, current]);
+    expect(audio.lastSpokenText, 'New');
+    await audio.toggle();
+    await audio.speakLesson('不要播放', 'Muted');
+    expect(audio.lastSpokenText, 'New');
+  });
+
   test('静音测试控制器会记录语音与音效意图', () async {
     final audio = GameAudioController.silent();
     addTearDown(audio.dispose);

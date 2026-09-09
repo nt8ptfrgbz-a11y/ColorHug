@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'buddy_models.dart';
 
 @immutable
 class ColorDiscovery {
@@ -192,6 +195,7 @@ class IslandProgress extends ChangeNotifier {
     return IslandProgress._(SharedPreferencesAsync());
   }
 
+  static const _buddyKey = 'color_hug.buddy_journal_v1';
   static const _starsKey = 'color_hug.stars';
   static const _repairedPartsKey = 'color_hug.repaired_parts';
   static const _detectiveWinsKey = 'color_hug.detective_wins';
@@ -203,6 +207,62 @@ class IslandProgress extends ChangeNotifier {
   final SharedPreferencesAsync? _preferences;
   final Set<String> _discoveredColors;
   final Set<String> _rewardTokens = {};
+  int _buddyColor = 0;
+  String _buddyOutfit = 'bow';
+  bool _buddyAppearanceChanged = false;
+  int _buddyBaths = 0;
+  int _buddyHideRounds = 0;
+  final List<JuiceRecipe> _juiceRecipes = [];
+  final Set<String> _buddyWords = {};
+
+  int get buddyColor => _buddyColor;
+  String get buddyOutfit => _buddyOutfit;
+  int get buddyBaths => _buddyBaths;
+  int get buddyHideRounds => _buddyHideRounds;
+  List<JuiceRecipe> get juiceRecipes => List.unmodifiable(_juiceRecipes);
+  Set<String> get buddyWords => Set.unmodifiable(_buddyWords);
+  Future<void> get ready => _writeQueue;
+
+  void dressBuddy({int? color, String? outfit}) {
+    if (color != null && (color < 0 || color >= buddyColors.length)) return;
+    if (outfit != null && !buddyOutfits.contains(outfit)) return;
+    _buddyColor = color ?? _buddyColor;
+    _buddyOutfit = outfit ?? _buddyOutfit;
+    _buddyAppearanceChanged = true;
+    notifyListeners();
+    _persist();
+  }
+
+  void saveJuiceRecipe(JuiceRecipe recipe) {
+    if (JuiceRecipe.fromJson(recipe.toJson()) == null) return;
+    _juiceRecipes.removeWhere((item) => item.id == recipe.id);
+    _juiceRecipes.insert(0, recipe);
+    if (_juiceRecipes.length > 12) _juiceRecipes.removeLast();
+    _buddyWords.addAll(recipe.fruits);
+    awardStar(token: 'buddy-juice-${recipe.reaction.name}');
+    notifyListeners();
+    _persist();
+  }
+
+  void completeBuddyBath(String outfit) {
+    if (!buddyOutfits.contains(outfit)) return;
+    dressBuddy(outfit: outfit);
+    _buddyBaths++;
+    _buddyWords.addAll(['wash', 'water', 'dry']);
+    awardStar(token: 'buddy-bath-$outfit');
+    notifyListeners();
+    _persist();
+  }
+
+  void findBuddyAnimal(String word) {
+    if (!hideAnimals.any((animal) => animal.word == word)) return;
+    _buddyHideRounds++;
+    _buddyWords.add(word);
+    awardStar(token: 'buddy-hide-$word');
+    notifyListeners();
+    _persist();
+  }
+
   int _stars = 0;
   int _repairedParts = 0;
   int _detectiveWins = 0;
@@ -327,7 +387,44 @@ class IslandProgress extends ChangeNotifier {
           await preferences.getStringList(_discoveriesKey) ?? const [];
       final storedTokens =
           await preferences.getStringList(_rewardTokensKey) ?? const [];
+      final rawBuddy = await preferences.getString(_buddyKey);
       if (_disposed) return;
+      if (rawBuddy != null) {
+        try {
+          final data = jsonDecode(rawBuddy);
+          if (data is Map) {
+            final color = data['color'];
+            final outfit = data['outfit'];
+            if (!_buddyAppearanceChanged) {
+              if (color is int && color >= 0 && color < buddyColors.length) {
+                _buddyColor = color;
+              }
+              if (outfit is String && buddyOutfits.contains(outfit)) {
+                _buddyOutfit = outfit;
+              }
+            }
+            final baths = data['baths'];
+            final rounds = data['rounds'];
+            if (baths is int && baths > 0) _buddyBaths += baths;
+            if (rounds is int && rounds > 0) _buddyHideRounds += rounds;
+            if (data['words'] is List) {
+              _buddyWords.addAll((data['words'] as List).whereType<String>());
+            }
+            if (data['recipes'] is List) {
+              for (final item in data['recipes'] as List) {
+                final recipe = JuiceRecipe.fromJson(item);
+                if (recipe != null &&
+                    !_juiceRecipes.any((r) => r.id == recipe.id) &&
+                    _juiceRecipes.length < 12) {
+                  _juiceRecipes.add(recipe);
+                }
+              }
+            }
+          }
+        } catch (_) {
+          // A damaged journal must not prevent existing island progress loading.
+        }
+      }
       if (storedStars > _stars) _stars = storedStars;
       if (storedParts > _repairedParts) _repairedParts = storedParts;
       if (storedWins > _detectiveWins) _detectiveWins = storedWins;
@@ -355,6 +452,17 @@ class IslandProgress extends ChangeNotifier {
     if (preferences == null) return;
     try {
       await Future.wait([
+        preferences.setString(
+          _buddyKey,
+          jsonEncode({
+            'color': _buddyColor,
+            'outfit': _buddyOutfit,
+            'baths': _buddyBaths,
+            'rounds': _buddyHideRounds,
+            'words': _buddyWords.toList(),
+            'recipes': _juiceRecipes.map((recipe) => recipe.toJson()).toList(),
+          }),
+        ),
         preferences.setInt(_starsKey, _stars),
         preferences.setInt(_repairedPartsKey, _repairedParts),
         preferences.setInt(_detectiveWinsKey, _detectiveWins),

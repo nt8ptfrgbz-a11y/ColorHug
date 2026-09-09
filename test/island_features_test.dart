@@ -106,11 +106,12 @@ void main() {
     }
   });
 
-  testWidgets('彩虹小岛展示六个活动入口', (tester) async {
+  testWidgets('彩虹小岛展示七个活动入口', (tester) async {
     await _pumpDesktopApp(tester);
     await _openIsland(tester);
 
     expect(find.text('🏝️ 彩虹小岛'), findsOneWidget);
+    expect(find.byKey(const ValueKey('activity-buddy')), findsOneWidget);
     expect(find.byKey(const ValueKey('activity-lab')), findsOneWidget);
     expect(find.byKey(const ValueKey('activity-detective')), findsOneWidget);
     expect(find.byKey(const ValueKey('activity-repair')), findsOneWidget);

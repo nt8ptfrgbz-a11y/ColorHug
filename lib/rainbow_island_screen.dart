@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'buddy_home_screen.dart';
 import 'color_challenges.dart';
 import 'color_detective_screen.dart';
 import 'color_gallery_screen.dart';
@@ -71,6 +72,25 @@ class RainbowIslandScreen extends StatelessWidget {
                                   spacing: 14,
                                   runSpacing: 14,
                                   children: [
+                                    _ActivityCard(
+                                      key: const ValueKey('activity-buddy'),
+                                      width: cardWidth,
+                                      icon: '🌷',
+                                      title: '小伙伴乐园',
+                                      subtitle: '怪兽果汁屋、泡泡浴和英语躲猫猫',
+                                      badge: '3–5岁 · 一起玩，一起成长',
+                                      colors: const [
+                                        Color(0xFF63AA90),
+                                        Color(0xFF397F77),
+                                      ],
+                                      onTap: () => _open(
+                                        context,
+                                        BuddyHomeScreen(
+                                          progress: progress,
+                                          audio: audio,
+                                        ),
+                                      ),
+                                    ),
                                     _ActivityCard(
                                       key: const ValueKey('activity-lab'),
                                       width: cardWidth,

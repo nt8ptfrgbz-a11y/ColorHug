@@ -42,6 +42,7 @@ dependencies:
   flutter_embed_unity: ^2.0.0
 
 dev_dependencies:
+  shared_preferences_platform_interface: ^2.4.2
   flutter_test:
     sdk: flutter
 

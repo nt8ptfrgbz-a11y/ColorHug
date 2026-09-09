@@ -24,6 +24,15 @@ enum GameSound {
 /// Distinct original in-game speaking styles; none imitate a specific person.
 enum GameVoice { narrator, child, hero, monster }
 
+enum GameLanguage { chinese, english }
+
+@immutable
+class SpokenLine {
+  const SpokenLine(this.text, {this.language = GameLanguage.chinese});
+  final String text;
+  final GameLanguage language;
+}
+
 const _speechProfiles =
     <GameVoice, ({double rate, double pitch, double volume})>{
       GameVoice.narrator: (rate: 0.54, pitch: 1.02, volume: 0.96),
@@ -85,6 +94,9 @@ class GameAudioController extends ChangeNotifier {
   GameVoice? lastVoice;
 
   @visibleForTesting
+  GameLanguage? lastLanguage;
+
+  @visibleForTesting
   GameSound? lastSound;
 
   Future<void> _initialize() async {
@@ -124,28 +136,51 @@ class GameAudioController extends ChangeNotifier {
   Future<void> speak(
     String text, {
     GameVoice voice = GameVoice.narrator,
+    GameLanguage language = GameLanguage.chinese,
+  }) => speakLines([SpokenLine(text, language: language)], voice: voice);
+
+  Future<void> speakEnglish(String text) =>
+      speak(text, language: GameLanguage.english);
+
+  Future<void> speakLesson(String instruction, String english) => speakLines([
+    SpokenLine(instruction),
+    SpokenLine(english, language: GameLanguage.english),
+  ]);
+
+  Future<void> speakLines(
+    List<SpokenLine> lines, {
+    GameVoice voice = GameVoice.narrator,
   }) async {
     final request = ++_speechRequest;
     await _ready;
-    if (!_enabled || text.trim().isEmpty) return;
-    lastSpokenText = text;
-    lastVoice = voice;
+    if (!_enabled || _disposed || request != _speechRequest) return;
     final speech = _speech;
-    if (speech == null) return;
     try {
-      await speech.stop();
-      if (request != _speechRequest || !_enabled) return;
-      await _applyVoiceProfile(speech, voice);
-      if (request != _speechRequest || !_enabled) return;
-      await speech.speak(text);
+      await speech?.stop();
+      if (request != _speechRequest || !_enabled || _disposed) return;
+      // Await native completion so Mandarin instructions and English examples
+      // do not interrupt one another. A new request cancels remaining lines.
+      await speech?.awaitSpeakCompletion(true);
+      for (final line in lines) {
+        if (request != _speechRequest || !_enabled || _disposed) return;
+        if (line.text.trim().isEmpty) continue;
+        if (speech != null) {
+          await _applyVoiceProfile(speech, voice, language: line.language);
+        }
+        if (request != _speechRequest || !_enabled || _disposed) return;
+        lastSpokenText = line.text;
+        lastVoice = voice;
+        lastLanguage = line.language;
+        await speech?.speak(line.text);
+      }
     } catch (_) {
-      // Some simulators do not have an installed Chinese system voice.
+      // Unavailable system voices never prevent touch interaction.
     }
   }
 
   Future<void> play(GameSound sound) async {
     await _ready;
-    if (!_enabled) return;
+    if (!_enabled || _disposed) return;
     lastSound = sound;
     final effects = _effects;
     final file = _soundFiles[sound];
@@ -200,8 +235,14 @@ class GameAudioController extends ChangeNotifier {
     }
   }
 
-  Future<void> _applyVoiceProfile(FlutterTts speech, GameVoice voice) async {
-    final selected = _preferredVoices[voice];
+  Future<void> _applyVoiceProfile(
+    FlutterTts speech,
+    GameVoice voice, {
+    GameLanguage language = GameLanguage.chinese,
+  }) async {
+    final selected = language == GameLanguage.chinese
+        ? _preferredVoices[voice]
+        : null;
     var appliedSelectedVoice = false;
     if (selected != null) {
       try {
@@ -223,19 +264,25 @@ class GameAudioController extends ChangeNotifier {
     }
     if (!appliedSelectedVoice) {
       try {
-        await speech.setLanguage('zh-CN');
+        await speech.setLanguage(
+          language == GameLanguage.english ? 'en-US' : 'zh-CN',
+        );
       } catch (_) {
         // Continue applying the remaining supported speech parameters.
       }
     }
     final profile = speechProfileFor(voice);
     try {
-      await speech.setSpeechRate(profile.rate);
+      await speech.setSpeechRate(
+        language == GameLanguage.english ? 0.42 : profile.rate,
+      );
     } catch (_) {
       // Keep the platform rate when this setting is unsupported.
     }
     try {
-      await speech.setPitch(profile.pitch);
+      await speech.setPitch(
+        language == GameLanguage.english ? 1.0 : profile.pitch,
+      );
     } catch (_) {
       // Keep the platform pitch when this setting is unsupported.
     }
