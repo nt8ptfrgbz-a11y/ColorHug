@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:color_hug/buddy_bath_screen.dart';
+import 'package:color_hug/buddy_adventure_models.dart';
+import 'package:color_hug/buddy_adventure_screen.dart';
 import 'package:color_hug/buddy_hide_screen.dart';
 import 'package:color_hug/buddy_home_screen.dart';
 import 'package:color_hug/buddy_juice_screen.dart';
@@ -74,7 +76,7 @@ void main() {
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),
-      const Size(1024, 900),
+      const Size(1024, 1160),
     );
     await capture('buddy-home');
   });
@@ -114,4 +116,43 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
     await capture('buddy-hide');
   });
+  for (final game in BuddyAdventure.values) {
+    testWidgets('新增玩法画面 ${game.name}', (tester) async {
+      final p = IslandProgress();
+      if (game == BuddyAdventure.dinosaur) p.saveBuddyCreation('dino', [0, 3]);
+      if (game == BuddyAdventure.building) {
+        p.saveBuddyCreation('building', [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0]);
+      }
+      if (game == BuddyAdventure.theater) {
+        p.saveBuddyCreation('show', [0, 0, 0, 3, 2]);
+      }
+      await preview(
+        tester,
+        BuddyAdventureScreen(
+          adventure: game,
+          progress: p,
+          audio: GameAudioController.silent(),
+        ),
+        const Size(390, 844),
+      );
+      if (game == BuddyAdventure.fireworks) {
+        final rect = tester.getRect(
+          find.byKey(const ValueKey('fireworks-sky')),
+        );
+        for (final point in [
+          const Offset(.25, .4),
+          const Offset(.7, .35),
+          const Offset(.48, .65),
+        ]) {
+          await tester.tapAt(
+            rect.topLeft +
+                Offset(rect.width * point.dx, rect.height * point.dy),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 170));
+        }
+      }
+      await capture('buddy-${game.name}');
+    });
+  }
 }

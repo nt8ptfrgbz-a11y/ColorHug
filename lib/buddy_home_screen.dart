@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'buddy_bath_screen.dart';
+import 'buddy_adventure_screen.dart';
+import 'buddy_adventure_models.dart';
 import 'buddy_hide_screen.dart';
 import 'buddy_juice_screen.dart';
 import 'buddy_models.dart';
@@ -23,7 +25,8 @@ class BuddyHomeScreen extends StatefulWidget {
 }
 
 class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
-  static const _welcome = '欢迎来抱抱的小家！可以做果汁，洗泡泡浴，或者和动物朋友躲猫猫。点点抱抱，和它打个招呼吧！';
+  static const _welcome =
+      '欢迎来抱抱的小家！九个小世界等着你，有果汁屋、恐龙蛋、天气工厂、软糖桥和小剧场。点喜欢的图片，我们一起出发！';
   bool _greeting = false;
   Timer? _greetingTimer;
 
@@ -66,6 +69,7 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
       final progress = widget.progress;
       return BuddyGameShell(
         title: '小伙伴乐园',
+        sceneHeight: 280,
         subtitle: 'BAOBAO & FRIENDS · 每次都有小故事',
         guide: '你好，我是抱抱！今天我们一起玩什么？',
         audio: widget.audio,
@@ -194,9 +198,9 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
             const SizedBox(height: 24),
             LayoutBuilder(
               builder: (context, constraints) {
-                final width = constraints.maxWidth >= 700
-                    ? (constraints.maxWidth - 24) / 3
-                    : constraints.maxWidth;
+                final columns = constraints.maxWidth >= 700 ? 3 : 2;
+                final width =
+                    (constraints.maxWidth - (columns - 1) * 12) / columns;
                 return Wrap(
                   spacing: 12,
                   runSpacing: 12,
@@ -246,6 +250,44 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
                         ),
                       ),
                     ),
+                    for (final game in BuddyAdventure.values)
+                      _PlayCard(
+                        key: ValueKey('buddy-game-${game.name}'),
+                        width: width,
+                        icon: const [
+                          '☁️',
+                          '🦕',
+                          '🍮',
+                          '🤪',
+                          '🎭',
+                          '🎆',
+                        ][game.index],
+                        title: buddyAdventureTitles[game.index],
+                        subtitle: const [
+                          '变天气 · 帮朋友',
+                          '刷沙土 · 孵蛋 · 照顾',
+                          '搭软糖 · 过小桥',
+                          '你来教 · 抱抱学',
+                          '编动作 · 演故事',
+                          '画星光 · 放烟花',
+                        ][game.index],
+                        note: '${progress.buddyAdventureWins(game)} 个小发现',
+                        color: const [
+                          Color(0xFFD7EAF0),
+                          Color(0xFFE1E9C5),
+                          Color(0xFFEED7EA),
+                          Color(0xFFF2DDD2),
+                          Color(0xFFDBDEF2),
+                          Color(0xFFDAD1EA),
+                        ][game.index],
+                        onTap: () => _open(
+                          BuddyAdventureScreen(
+                            adventure: game,
+                            progress: progress,
+                            audio: widget.audio,
+                          ),
+                        ),
+                      ),
                   ],
                 );
               },
@@ -349,42 +391,91 @@ class _PlayCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Text(icon, style: const TextStyle(fontSize: 43)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          padding: EdgeInsets.all(width < 240 ? 12 : 20),
+          child: width < 240
+              ? SizedBox(
+                  height: 152,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(icon, style: const TextStyle(fontSize: 35)),
+                          const Spacer(),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 19,
+                            color: buddyInk,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 9),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: buddyInk,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: buddyInk,
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        note,
+                        style: TextStyle(
+                          color: buddyInk.withValues(alpha: .65),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Row(
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: buddyInk,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w900,
+                    Text(icon, style: const TextStyle(fontSize: 43)),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: buddyInk,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          Text(
+                            subtitle,
+                            style: const TextStyle(
+                              color: buddyInk,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            note,
+                            style: TextStyle(
+                              color: buddyInk.withValues(alpha: .65),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 7),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(color: buddyInk, fontSize: 12),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      note,
-                      style: TextStyle(
-                        color: buddyInk.withValues(alpha: .65),
-                        fontSize: 11,
-                      ),
-                    ),
+                    const Icon(Icons.chevron_right_rounded, color: buddyInk),
                   ],
                 ),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: buddyInk),
-            ],
-          ),
         ),
       ),
     ),

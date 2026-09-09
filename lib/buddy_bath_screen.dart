@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'buddy_models.dart';
+import 'buddy_effects.dart';
 import 'buddy_widgets.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
@@ -21,6 +22,7 @@ class BuddyBathScreen extends StatefulWidget {
 }
 
 class _BuddyBathScreenState extends State<BuddyBathScreen> {
+  final _effects = BuddyEffectsController();
   BathStage _stage = BathStage.soap;
   final Set<int> _touched = {};
   String? _feedback;
@@ -82,6 +84,12 @@ class _BuddyBathScreenState extends State<BuddyBathScreen> {
     }
     _previous = point;
     if (!changed) return;
+    _effects.burst(
+      Offset(.5 + (point.dx - .5) * .65, .12 + point.dy * .7),
+      kind: _stage == BathStage.rinse ? BuddyBurst.splash : BuddyBurst.bubbles,
+      color: const Color(0xFF9FE9F4),
+      count: 15,
+    );
     unawaited(widget.audio.play(GameSound.tap));
     setState(() {
       _tickled = true;
@@ -125,11 +133,13 @@ class _BuddyBathScreenState extends State<BuddyBathScreen> {
   @override
   void dispose() {
     _feedbackTimer?.cancel();
+    _effects.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => BuddyGameShell(
+    effects: _effects,
     title: '小怪兽洗澡澡',
     subtitle: 'BUBBLE BATH · 温柔照顾小伙伴',
     guide: _guide,

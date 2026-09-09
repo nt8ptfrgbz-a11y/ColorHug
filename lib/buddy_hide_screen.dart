@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'buddy_models.dart';
+import 'buddy_effects.dart';
 import 'buddy_widgets.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
@@ -23,6 +24,7 @@ class BuddyHideScreen extends StatefulWidget {
 }
 
 class _BuddyHideScreenState extends State<BuddyHideScreen> {
+  final _effects = BuddyEffectsController();
   late final Random _random;
   late HideRound _round;
   late int _roundIndex;
@@ -97,6 +99,7 @@ class _BuddyHideScreenState extends State<BuddyHideScreen> {
   }
 
   void _reward() {
+    _effects.burst(const Offset(.5, .35), count: 42);
     widget.progress.findBuddyAnimal(_round.animal.word);
     unawaited(widget.audio.play(GameSound.complete));
     _narrate();
@@ -160,11 +163,13 @@ class _BuddyHideScreenState extends State<BuddyHideScreen> {
   @override
   void dispose() {
     _searchTimer?.cancel();
+    _effects.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => BuddyGameShell(
+    effects: _effects,
     title: '英语躲猫猫',
     subtitle: 'PEEKABOO · 听一听，找朋友',
     guide: _guide,

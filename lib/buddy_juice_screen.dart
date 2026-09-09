@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 
 import 'buddy_models.dart';
+import 'buddy_effects.dart';
 import 'buddy_widgets.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
@@ -24,6 +25,7 @@ class BuddyJuiceScreen extends StatefulWidget {
 }
 
 class _BuddyJuiceScreenState extends State<BuddyJuiceScreen> {
+  final _effects = BuddyEffectsController();
   final List<String> _fruits = [];
   JuiceStage _stage = JuiceStage.cutting;
   bool _iced = false, _orders = false;
@@ -91,6 +93,13 @@ class _BuddyJuiceScreenState extends State<BuddyJuiceScreen> {
         _ => GameSound.fruitOrange,
       }),
     );
+    final index = juiceFruits.indexOf(fruit);
+    _effects.burst(
+      Offset(.16 + (index % 3) * .33, .7 + (index ~/ 3) * .18),
+      color: fruit.color,
+      kind: BuddyBurst.splash,
+      count: 20,
+    );
     unawaited(widget.audio.speakEnglish(fruit.id));
   }
 
@@ -143,6 +152,7 @@ class _BuddyJuiceScreenState extends State<BuddyJuiceScreen> {
   void _serve() {
     if (_stage != JuiceStage.serving) return;
     setState(() => _stage = JuiceStage.celebrated);
+    _effects.burst(const Offset(.38, .4), color: _recipe.color, count: 42);
     widget.progress.saveJuiceRecipe(_recipe);
     unawaited(widget.audio.play(GameSound.complete));
     _narrate();
@@ -164,11 +174,13 @@ class _BuddyJuiceScreenState extends State<BuddyJuiceScreen> {
   @override
   void dispose() {
     _stopBlender();
+    _effects.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => BuddyGameShell(
+    effects: _effects,
     title: '怪兽果汁屋',
     subtitle: 'LITTLE JUICE BAR · 调一杯小惊喜',
     guide: _guide,

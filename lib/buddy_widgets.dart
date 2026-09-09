@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'buddy_models.dart';
+import 'buddy_effects.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
 
@@ -24,6 +25,8 @@ class BuddyGameShell extends StatefulWidget {
     this.english,
     this.backLabel = '返回小伙伴乐园',
     this.top,
+    this.effects,
+    this.sceneHeight,
   });
   final String title, subtitle, guide, backLabel;
   final String? english;
@@ -32,6 +35,8 @@ class BuddyGameShell extends StatefulWidget {
   final Widget scene, controls;
   final Widget? top;
   final VoidCallback onRepeat;
+  final BuddyEffectsController? effects;
+  final double? sceneHeight;
 
   @override
   State<BuddyGameShell> createState() => _BuddyGameShellState();
@@ -138,8 +143,13 @@ class _BuddyGameShellState extends State<BuddyGameShell> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: SizedBox(
-                        height: narrow ? 340 : 370,
-                        child: widget.scene,
+                        height: widget.sceneHeight ?? (narrow ? 340 : 370),
+                        child: widget.effects == null
+                            ? widget.scene
+                            : BuddyEffects(
+                                controller: widget.effects!,
+                                child: widget.scene,
+                              ),
                       ),
                     ),
                     if (widget.english != null) ...[

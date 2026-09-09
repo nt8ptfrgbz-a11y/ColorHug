@@ -77,7 +77,7 @@ class RainbowIslandScreen extends StatelessWidget {
                                       width: cardWidth,
                                       icon: '🌷',
                                       title: '小伙伴乐园',
-                                      subtitle: '怪兽果汁屋、泡泡浴和英语躲猫猫',
+                                      subtitle: '九种新玩法：恐龙、天气、搭桥与英语启蒙',
                                       badge: '3–5岁 · 一起玩，一起成长',
                                       colors: const [
                                         Color(0xFF63AA90),

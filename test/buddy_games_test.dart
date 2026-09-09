@@ -91,6 +91,22 @@ void main() {
     progress.completeBuddyBath('star');
     progress.findBuddyAnimal('cat');
     progress.findBuddyAnimal('cat');
+    progress.saveBuddyCreation('building', [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+    ]);
+    progress.saveBuddyCreation('show', [1, 2, 0, 3]);
+    progress.saveBuddyCreation('dino', [2, 3]);
     await progress.ready;
     final restored = IslandProgress.persistent();
     await restored.ready;
@@ -102,6 +118,9 @@ void main() {
     expect(restored.buddyWords, containsAll(['cat', 'watermelon', 'wash']));
     expect(restored.stars, 4);
     expect(restored.detectiveWins, 1);
+    expect(restored.buddyCreation('building')!.skip(8), [1, 1, 1, 1]);
+    expect(restored.buddyCreation('show'), [1, 2, 0, 3]);
+    expect(restored.buddyCreation('dino'), [2, 3]);
     progress.dispose();
     restored.dispose();
   });

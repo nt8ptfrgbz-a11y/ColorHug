@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'buddy_models.dart';
+import 'buddy_adventure_models.dart';
 
 @immutable
 class ColorDiscovery {
@@ -215,6 +216,47 @@ class IslandProgress extends ChangeNotifier {
   final List<JuiceRecipe> _juiceRecipes = [];
   final Set<String> _buddyWords = {};
 
+  final Map<String, List<int>> _buddyCreations = {};
+  int buddyAdventureWins(BuddyAdventure game) =>
+      _rewardCount('buddy-adventure-${game.name}-');
+  List<int>? buddyCreation(String key) => _buddyCreations[key] == null
+      ? null
+      : List.unmodifiable(_buddyCreations[key]!);
+  void recordBuddyAdventure(
+    BuddyAdventure game,
+    int variant,
+    Iterable<String> words,
+  ) {
+    if (variant < 0 || variant > 20) return;
+    _buddyWords.addAll(words.where(adventureWords[game]!.contains));
+    awardStar(token: 'buddy-adventure-${game.name}-$variant');
+    notifyListeners();
+    _persist();
+  }
+
+  void saveBuddyCreation(String key, List<int> data) {
+    if (!_validCreation(key, data)) return;
+    _buddyCreations[key] = List.of(data);
+    notifyListeners();
+    _persist();
+  }
+
+  static bool _validCreation(String key, List<int> data) => switch (key) {
+    'building' => data.length == 12 && data.every((v) => v >= 0 && v <= 3),
+    'show' =>
+      data.length >= 2 &&
+          data.length <= 8 &&
+          data.every((v) => v >= 0 && v < 4) &&
+          data[1] < 3,
+    'dino' =>
+      data.length == 2 &&
+          data[0] >= 0 &&
+          data[0] < 3 &&
+          data[1] >= 0 &&
+          data[1] <= 3,
+    _ => false,
+  };
+
   int get buddyColor => _buddyColor;
   String get buddyOutfit => _buddyOutfit;
   int get buddyBaths => _buddyBaths;
@@ -393,6 +435,18 @@ class IslandProgress extends ChangeNotifier {
         try {
           final data = jsonDecode(rawBuddy);
           if (data is Map) {
+            final creations = data['creations'];
+            if (creations is Map) {
+              for (final key in ['building', 'show', 'dino']) {
+                final value = creations[key];
+                if (value is List && value.every((v) => v is int)) {
+                  final items = value.cast<int>();
+                  if (_validCreation(key, items)) {
+                    _buddyCreations.putIfAbsent(key, () => List.of(items));
+                  }
+                }
+              }
+            }
             final color = data['color'];
             final outfit = data['outfit'];
             if (!_buddyAppearanceChanged) {
@@ -455,6 +509,7 @@ class IslandProgress extends ChangeNotifier {
         preferences.setString(
           _buddyKey,
           jsonEncode({
+            'creations': _buddyCreations,
             'color': _buddyColor,
             'outfit': _buddyOutfit,
             'baths': _buddyBaths,
