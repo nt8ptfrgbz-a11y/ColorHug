@@ -2,8 +2,34 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'expedition_models.dart';
+import 'expedition_world.dart';
+import 'expedition_story.dart';
+import 'chapters/orchard_controller.dart';
+import 'chapters/cave_controller.dart';
+import 'chapters/bay_controller.dart';
+part 'chapters/island_actions.dart';
 
 class ExpeditionController extends ChangeNotifier {
+  IslandRegion region = IslandRegion.valley;
+  final story = IslandStory();
+  final orchard = OrchardController();
+  final cave = CaveController();
+  final bay = BayController();
+  int regionRevision = 0;
+  double transition = 0;
+  bool campLampOn = true;
+  String? chapterGesture;
+  bool _leftEdge = false;
+  double get worldEnd => islandRegions[region]!.end;
+  double terrain(double x) =>
+      region == IslandRegion.valley ? roadHeight(x) : math.sin(x / 190) * 5;
+  bool get onBoat =>
+      region == IslandRegion.bay &&
+      const [
+        FerryPhase.boarded,
+        FerryPhase.sailing,
+        FerryPhase.arrived,
+      ].contains(bay.ferry);
   double time = 0,
       carX = campX,
       velocity = 0,
@@ -47,7 +73,8 @@ class ExpeditionController extends ChangeNotifier {
   final Map<String, double> _eventAt = {};
   final math.Random _random = math.Random(91);
   bool get bridge => logPlace == LogPlace.bridge;
-  bool get nearRiver => carX > 920 && carX < 1660;
+  bool get nearRiver =>
+      region == IslandRegion.valley && carX > 920 && carX < 1660;
   bool get riverWork =>
       nearRiver &&
       velocity.abs() < 18 &&
@@ -58,16 +85,15 @@ class ExpeditionController extends ChangeNotifier {
       (dino != DinoAction.riding &&
           dinoX > riverLeft - 35 &&
           dinoX < riverRight + 35);
-  Offset get craneBase =>
-      Offset(carX - 40, roadHeight(carX) - 110 + suspension);
+  Offset get craneBase => Offset(carX - 40, terrain(carX) - 110 + suspension);
   Offset get logPosition => Offset(logX, logY);
   Offset get fruitPosition => fruitCarried
-      ? Offset(carX - 60, roadHeight(carX) - 97)
+      ? Offset(carX - 60, terrain(carX) - 97)
       : Offset(fruitX, fruitY);
-  String get hint => home
+  String get valleyHint => home
       ? '想去哪里，就点点那边的路。朋友还想和你玩。'
       : joined
-      ? '慢慢开回左边的营地吧，也可以继续探索。'
+      ? '伙伴坐好啦！向右开，果林里还有新的冒险。'
       : bridge
       ? '小恐龙过来啦！停稳后点它，邀请上车。'
       : carX > 900
@@ -75,7 +101,7 @@ class ExpeditionController extends ChangeNotifier {
       : carX > 420
       ? '按住前面的路开车，松手停。泥坑也可以玩！'
       : '点点小车打招呼，再按住右边的路出发。';
-  String get chapter => home
+  String get valleyChapter => home
       ? '我们的河谷'
       : joined
       ? '一起回家'
@@ -132,9 +158,15 @@ class ExpeditionController extends ChangeNotifier {
     if (paused || dino == DinoAction.boarding || dino == DinoAction.alighting) {
       return;
     }
+    if (onBoat) {
+      if (bay.ferry == FerryPhase.boarded) {
+        emit("boat-help", "Let’s sail!", "点点船绳，和朋友一起开船吧");
+      }
+      return;
+    }
     if (logPlace == LogPlace.hook) putLog();
     input = ExpeditionInput.road;
-    driveTarget = x.clamp(120.0, valleyEnd);
+    driveTarget = x.clamp(120.0, worldEnd);
     autoDrive = automatic;
     _hintIdle = 0;
     emit('drive', "Let's go!", '出发！', sound: 'engine', cooldown: 6);
@@ -231,7 +263,7 @@ class ExpeditionController extends ChangeNotifier {
           logY > -130 &&
           (logX <= riverLeft - 35 || logX >= riverRight + 35);
       logX = goodBank ? logX.clamp(950.0, 1630.0) : _lastLogBank;
-      logY = roadHeight(logX) - 27;
+      logY = terrain(logX) - 27;
       logPlace = LogPlace.bank;
       logAngle = 0;
       _lastLogBank = logX;
@@ -294,16 +326,16 @@ class ExpeditionController extends ChangeNotifier {
     if (input != ExpeditionInput.fruit) return;
     fruitX = point.dx.clamp(
       math.max(120.0, carX - 260),
-      math.min(valleyEnd, carX + 260),
+      math.min(worldEnd, carX + 260),
     );
-    fruitY = math.min(point.dy, roadHeight(fruitX) - 26);
+    fruitY = math.min(point.dy, terrain(fruitX) - 26);
   }
 
   void releaseFruit({bool cancelled = false}) {
     if (input != ExpeditionInput.fruit) return;
     if (!cancelled &&
         (fruitX - (carX - 60)).abs() < 115 &&
-        fruitY < roadHeight(carX) - 45) {
+        fruitY < terrain(carX) - 45) {
       fruitCarried = true;
       emit('fruit', 'In the truck!', '把果子带给朋友吧', sound: 'grab');
     } else if (!cancelled && home && (fruitX - dinoX).abs() < 140) {
@@ -320,7 +352,7 @@ class ExpeditionController extends ChangeNotifier {
       if (fruitX > riverLeft - 30 && fruitX < riverRight + 30 && !bridge) {
         fruitX = riverLeft - 80;
       }
-      fruitY = roadHeight(fruitX) - 26;
+      fruitY = terrain(fruitX) - 26;
       fruitV = 0;
     }
     input = ExpeditionInput.none;
@@ -329,7 +361,7 @@ class ExpeditionController extends ChangeNotifier {
 
   void leaf() {
     discover('leaf');
-    burst(Offset(535, roadHeight(535) - 3), const Color(0xFFABC9AA), 9);
+    burst(Offset(535, terrain(535) - 3), const Color(0xFFABC9AA), 9);
     emit('leaf', 'Float, little leaf.', '小叶子漂呀漂', sound: 'splash');
   }
 
@@ -338,7 +370,7 @@ class ExpeditionController extends ChangeNotifier {
     mud = 0;
     discover('wash');
     emit('wash', 'Clean again!', '清清的小溪洗掉泥巴啦', sound: 'splash');
-    burst(Offset(carX, roadHeight(carX) - 35), const Color(0xFFB6E0D8), 18);
+    burst(Offset(carX, terrain(carX) - 35), const Color(0xFFB6E0D8), 18);
     mark();
   }
 
@@ -395,8 +427,11 @@ class ExpeditionController extends ChangeNotifier {
     velocity +=
         (targetV - velocity) * (1 - math.exp(-dt * (targetV == 0 ? 9 : 3.8)));
     if (velocity.abs() < .2) velocity = 0;
-    carX = (carX + velocity * dt).clamp(120.0, valleyEnd);
-    if (!bridge && carX > riverStop && oldX <= bridgeCenter) {
+    carX = (carX + velocity * dt).clamp(120.0, worldEnd);
+    if (region == IslandRegion.valley &&
+        !bridge &&
+        carX > riverStop &&
+        oldX <= bridgeCenter) {
       carX = riverStop;
       velocity = 0;
       stopDrive();
@@ -406,23 +441,29 @@ class ExpeditionController extends ChangeNotifier {
         mark();
       }
     }
-    if (!bridge && carX < riverRight + 115 && oldX > bridgeCenter) {
+    if (region == IslandRegion.valley &&
+        !bridge &&
+        carX < riverRight + 115 &&
+        oldX > bridgeCenter) {
       carX = riverRight + 115;
       velocity = 0;
       stopDrive();
     }
     final traveled = carX - oldX;
     wheelAngle += traveled / 29;
-    final tilt = math.atan2(roadHeight(carX + 65) - roadHeight(carX - 65), 130);
+    final tilt = math.atan2(terrain(carX + 65) - terrain(carX - 65), 130);
     carTilt += (tilt + targetV * .00008 - carTilt) * (1 - math.exp(-dt * 8));
     suspensionSpeed += (-suspension * 65 - suspensionSpeed * 11) * dt;
     suspension += suspensionSpeed * dt;
     _particleWait -= dt;
-    if (carX > 470 && carX < 600 && velocity.abs() > 15) {
+    if (region == IslandRegion.valley &&
+        carX > 470 &&
+        carX < 600 &&
+        velocity.abs() > 15) {
       mud = (mud + dt * .16).clamp(0.0, 1.0);
       suspensionSpeed += math.sin(time * 18) * dt * 25;
       if (_particleWait <= 0) {
-        burst(Offset(carX - 70, roadHeight(carX)), const Color(0xFFB9A078), 5);
+        burst(Offset(carX - 70, terrain(carX)), const Color(0xFFB9A078), 5);
         _particleWait = .22;
       }
       if (!secrets.contains('mud')) {
@@ -430,24 +471,33 @@ class ExpeditionController extends ChangeNotifier {
         emit('mud', 'Splash!', '哗啦！泥坑真好玩', sound: 'splash');
       }
     }
-    if (carX > 355 && carX < 410 && mud > 0 && velocity.abs() < 20) wash();
+    if (region == IslandRegion.valley &&
+        carX > 355 &&
+        carX < 410 &&
+        mud > 0 &&
+        velocity.abs() < 20) {
+      wash();
+    }
     if ((carX - _savedDistance).abs() > 180) {
       _savedDistance = carX;
       mark();
     }
-    if (!fruitCarried && !fed && input != ExpeditionInput.fruit) {
+    if (region == IslandRegion.valley &&
+        !fruitCarried &&
+        !fed &&
+        input != ExpeditionInput.fruit) {
       if ((carX - fruitX).abs() < 115 && velocity.abs() > 10) {
         fruitV = velocity * 1.1;
         discover('fruit');
       }
-      fruitX = (fruitX + fruitV * dt).clamp(130.0, valleyEnd);
+      fruitX = (fruitX + fruitV * dt).clamp(130.0, worldEnd);
       fruitRotation += fruitV * dt / 26;
       fruitV *= math.exp(-dt * 2.7);
       if (!bridge && fruitX > riverLeft - 28 && fruitX < riverRight + 28) {
         fruitX = fruitV >= 0 ? riverLeft - 28 : riverRight + 28;
         fruitV *= -.25;
       }
-      fruitY = roadHeight(fruitX) - 26;
+      fruitY = terrain(fruitX) - 26;
     }
     if (input != ExpeditionInput.hook && logPlace != LogPlace.hook) {
       hookTarget =
@@ -465,7 +515,7 @@ class ExpeditionController extends ChangeNotifier {
     }
     if (logPlace == LogPlace.hook) {
       logX = hook.dx;
-      logY = math.min(hook.dy + 24, roadHeight(logX) - 20);
+      logY = math.min(hook.dy + 24, terrain(logX) - 20);
       logSwing += (-(hook.dx - oldHook.dx) * .15 - logSwing) * dt * 7;
       logAngle = (logSwing * .09).clamp(-.16, .16);
     }
@@ -473,12 +523,20 @@ class ExpeditionController extends ChangeNotifier {
       _autoPlace = false;
       putLog();
     }
-    _dinosaur(dt);
+    if (region == IslandRegion.valley) {
+      _dinosaur(dt);
+    } else {
+      dinoX = carX - 55;
+      if (joined) dino = DinoAction.riding;
+    }
+    _chapterStep(dt, oldX);
     final working =
         input == ExpeditionInput.hook || nearRiver && !bridge && carX > 1060;
-    final desiredCamera = working
+    final desiredCamera = onBoat
+        ? bay.boatX
+        : working
         ? 1275.0
-        : (carX + velocity.sign * 100).clamp(310.0, valleyEnd - 160);
+        : (carX + velocity.sign * 100).clamp(310.0, worldEnd - 160);
     if (input != ExpeditionInput.hook) {
       cameraX += (desiredCamera - cameraX) * (1 - math.exp(-dt * 3.2));
     }
@@ -560,6 +618,9 @@ class ExpeditionController extends ChangeNotifier {
   void cancel() {
     _autoPlace = false;
     stopDrive();
+    orchard.stop();
+    bay.cancel();
+    chapterGesture = null;
     if (logPlace == LogPlace.hook) putLog(cancelled: true);
     if (input == ExpeditionInput.fruit) releaseFruit(cancelled: true);
     input = ExpeditionInput.none;
@@ -579,7 +640,11 @@ class ExpeditionController extends ChangeNotifier {
   }
 
   ValleyCheckpoint checkpoint() {
-    final safeCar = !bridge && carX > riverStop && carX < riverRight + 115
+    final safeCar =
+        region == IslandRegion.valley &&
+            !bridge &&
+            carX > riverStop &&
+            carX < riverRight + 115
         ? riverStop
         : carX;
     return ValleyCheckpoint(
@@ -598,23 +663,64 @@ class ExpeditionController extends ChangeNotifier {
       fed: fed,
       riding: dino == DinoAction.riding || dino == DinoAction.boarding,
       secrets: Set.of(secrets),
+      adventure: {
+        'region': region.name,
+        'story': story.toJson(),
+        'orchard': orchard.toJson(),
+        'cave': cave.toJson(),
+        'bay': bay.toJson(),
+      },
     );
   }
 
   void restore(ValleyCheckpoint save) {
-    carX = save.carX;
+    final data = save.adventure;
+    region = data == null
+        ? IslandRegion.valley
+        : IslandRegion.values.firstWhere((r) => r.name == data['region']);
+    story.restore(
+      data == null ? {} : Map<String, dynamic>.from(data['story'] as Map),
+    );
+    orchard.restore(data == null ? {} : data['orchard'] as Map);
+    cave.restore(data == null ? {} : data['cave'] as Map);
+    bay.restore(data == null ? {} : data['bay'] as Map);
+    if (story.rockCleared) orchard.stoneX = 835;
+    if (story.picnicReady) {
+      orchard.fed = true;
+      orchard.basketLoaded = true;
+    }
+    if (story.caveOpen) {
+      cave.opened = true;
+      cave.door = 1;
+    }
+    if (story.lampFound) cave.lamp = true;
+    if (story.flyerRescued) bay.rescued = true;
+    story.rockCleared = story.rockCleared || orchard.cleared;
+    story.picnicReady = story.picnicReady || orchard.ready;
+    story.caveOpen = story.caveOpen || cave.opened;
+    story.lampFound = story.lampFound || cave.lamp;
+    story.flyerRescued = story.flyerRescued || bay.rescued;
+    if (!save.joined && region != IslandRegion.valley) {
+      region = IslandRegion.valley;
+    }
+    story.visited.add(region);
+    regionRevision++;
+    transition = 0;
+    chapterGesture = null;
+    carX = save.carX.clamp(120.0, worldEnd);
+    if (region == IslandRegion.bay && onBoat) carX = 1630;
     velocity = 0;
     driveTarget = null;
     cameraX = carX + 100;
     logX = save.bridge ? bridgeCenter : save.logX;
-    logY = save.bridge ? -19 : roadHeight(logX) - 27;
+    logY = save.bridge ? -19 : terrain(logX) - 27;
     logPlace = save.bridge ? LogPlace.bridge : LogPlace.bank;
     _lastLogBank = save.bridge ? 1205 : save.logX;
     joined = save.joined;
     home = save.home;
     mud = save.mud;
     fruitX = save.fruitX;
-    fruitY = roadHeight(fruitX) - 26;
+    fruitY = terrain(fruitX) - 26;
     fruitCarried = save.fruitCarried;
     fed = save.fed;
     dino = home && !save.riding

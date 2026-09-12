@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
@@ -74,12 +75,15 @@ class ValleyCheckpoint {
     this.fed = false,
     this.riding = false,
     this.secrets = const {},
+    this.adventure,
   });
   final double carX, logX, mud, fruitX;
   final bool bridge, joined, home, fruitCarried, fed, riding;
   final Set<String> secrets;
+  final Map<String, dynamic>? adventure;
   Map<String, dynamic> toJson() => {
-    'v': 1,
+    'v': 2,
+    if (adventure != null) 'adventure': jsonDecode(jsonEncode(adventure)),
     'car': carX,
     'log': logX,
     'bridge': bridge,
@@ -93,7 +97,10 @@ class ValleyCheckpoint {
     'secrets': secrets.toList()..sort(),
   };
   static ValleyCheckpoint? fromJson(Object? raw) {
-    if (raw is! Map || raw['v'] != 1) return null;
+    if (raw is! Map || !const [1, 2].contains(raw['v'])) return null;
+    final adventure = _adventure(raw['adventure']);
+    if (raw['adventure'] != null && adventure == null) return null;
+    final inValley = adventure == null || adventure['region'] == 'valley';
     bool number(String key, double lo, double hi) =>
         raw[key] is num &&
         (raw[key] as num).isFinite &&
@@ -120,7 +127,8 @@ class ValleyCheckpoint {
     if (raw['riding'] != null && raw['riding'] is! bool) return null;
     if (raw['riding'] == true && raw['joined'] != true) return null;
     if (raw['fed'] == true && raw['home'] != true) return null;
-    if (raw['bridge'] == false &&
+    if (inValley &&
+        raw['bridge'] == false &&
         (raw['car'] as num) > riverStop &&
         (raw['car'] as num) < riverRight + 110) {
       return null;
@@ -141,6 +149,119 @@ class ValleyCheckpoint {
       fed: raw['fed'],
       riding: raw['riding'] == true,
       secrets: secrets.cast<String>().toSet(),
+      adventure: adventure,
     );
   }
+}
+
+Map<String, dynamic>? _adventure(Object? raw) {
+  if (raw is! Map ||
+      !const ['valley', 'orchard', 'cave', 'bay'].contains(raw['region'])) {
+    return null;
+  }
+  final result = <String, dynamic>{'region': raw['region']};
+  final story = raw['story'];
+  if (story is! Map) return null;
+  final visited = story['visited'];
+  if (visited is! List ||
+      visited.length > 4 ||
+      visited.any(
+        (v) => !const ['valley', 'orchard', 'cave', 'bay'].contains(v),
+      )) {
+    return null;
+  }
+  for (final key in [
+    'rock',
+    'picnic',
+    'door',
+    'lamp',
+    'flyer',
+    'sailed',
+    'celebrated',
+  ]) {
+    if (story[key] is! bool) return null;
+  }
+  if (story['memories'] is! int ||
+      story['memories'] < 0 ||
+      story['memories'] > 999) {
+    return null;
+  }
+  result['story'] = {
+    for (final key in [
+      'visited',
+      'rock',
+      'picnic',
+      'door',
+      'lamp',
+      'flyer',
+      'sailed',
+      'celebrated',
+      'memories',
+    ])
+      key: story[key],
+  };
+  bool n(Object? v, double lo, double hi) =>
+      v is num && v.isFinite && v >= lo && v <= hi;
+  final orchard = raw['orchard'];
+  if (orchard is! Map ||
+      !n(orchard['stone'], 690, 835) ||
+      orchard['fed'] is! bool ||
+      orchard['loaded'] is! bool) {
+    return null;
+  }
+  final apples = orchard['apples'];
+  if (apples is! List || apples.length != 4) return null;
+  for (final a in apples) {
+    if (a is! Map ||
+        !n(a['x'], 980, 1430) ||
+        !n(a['y'], -250, -18) ||
+        a['stored'] is! bool ||
+        a['eaten'] is! bool ||
+        a['stored'] == true && a['eaten'] == true) {
+      return null;
+    }
+  }
+  result['orchard'] = {
+    'stone': orchard['stone'],
+    'fed': orchard['fed'],
+    'loaded': orchard['loaded'],
+    'apples': [
+      for (final a in apples)
+        {
+          for (final k in ['x', 'y', 'stored', 'eaten']) k: a[k],
+        },
+    ],
+  };
+  final cave = raw['cave'];
+  if (cave is! Map ||
+      cave['light'] is! List ||
+      (cave['light'] as List).length != 2 ||
+      !n(cave['light'][0], 380, 1350) ||
+      !n(cave['light'][1], -300, 20) ||
+      !n(cave['revealed'], 0, 1) ||
+      cave['open'] is! bool ||
+      cave['lamp'] is! bool) {
+    return null;
+  }
+  result['cave'] = {
+    for (final k in ['light', 'revealed', 'open', 'lamp']) k: cave[k],
+  };
+  final bay = raw['bay'];
+  if (bay is! Map ||
+      bay['rescued'] is! bool ||
+      !const [
+        'offshore',
+        'docking',
+        'docked',
+        'boarded',
+        'sailing',
+        'arrived',
+      ].contains(bay['ferry']) ||
+      !n(bay['voyage'], 0, 1)) {
+    return null;
+  }
+  result['bay'] = {
+    for (final k in ['rescued', 'ferry', 'voyage']) k: bay[k],
+  };
+  return Map<String, dynamic>.from(jsonDecode(jsonEncode(result)) as Map);
 }

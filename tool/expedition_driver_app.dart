@@ -9,10 +9,11 @@ import 'package:flutter_driver/driver_extension.dart';
 import 'package:color_hug/main.dart';
 import 'package:color_hug/island_progress.dart';
 import 'package:color_hug/buddy_expedition/expedition_scene.dart';
+import 'package:color_hug/buddy_expedition/expedition_controller.dart';
 import 'package:color_hug/buddy_expedition/expedition_models.dart';
 
 void main() {
-  bool exclusive = false;
+  bool exclusive = true;
   var pointer = 800;
   enableFlutterDriverExtension(
     handler: (request) async {
@@ -45,7 +46,7 @@ void main() {
           exclusive = false;
           return 'released';
         }
-        final view = ValleyView(box!.size, m.cameraX);
+        final view = ValleyView(box!.size, m.cameraX, region: m.region);
         final local = switch (command['target']) {
           'right' => Offset(
             box!.size.width * .9,
@@ -58,7 +59,9 @@ void main() {
           'log' => view.toScreen(m.logPosition),
           'bridge' => view.toScreen(const Offset(bridgeCenter, -20)),
           'dino' => view.toScreen(Offset(m.dinoX, roadHeight(m.dinoX) - 65)),
-          _ => throw ArgumentError('Unknown pointer target'),
+          _ => view.toScreen(
+            m.chapterTargets.firstWhere((v) => v.id == command['target']).at,
+          ),
         };
         final point = box!.localToGlobal(local);
         final id = ++pointer;
@@ -80,6 +83,10 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 800));
       }
       return jsonEncode({
+        'region': m.region.name,
+        'story': m.story.toJson(),
+        'basket': m.orchard.count,
+        'ferry': m.bay.ferry.name,
         'car': m.carX,
         'bridge': m.bridge,
         'log': m.logPlace.name,

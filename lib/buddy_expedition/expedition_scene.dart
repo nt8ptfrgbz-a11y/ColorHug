@@ -4,13 +4,18 @@ import 'package:flutter/material.dart';
 import 'expedition_assets.dart';
 import 'expedition_controller.dart';
 import 'expedition_models.dart';
+import 'expedition_world.dart';
+import 'chapters/bay_controller.dart';
+part 'chapters/island_scenes.dart';
 
 class ValleyView {
-  ValleyView(this.size, this.camera);
+  ValleyView(this.size, this.camera, {this.region = IslandRegion.valley});
+  final IslandRegion region;
   final Size size;
   final double camera;
   double get scale {
     if (size.width >= 600) return (size.height / 610).clamp(.60, 1.3);
+    if (region != IslandRegion.valley) return size.width / 650;
     final enter = ((camera - 800) / 260).clamp(0.0, 1.0);
     final exit = ((1850 - camera) / 230).clamp(0.0, 1.0);
     final blend = Curves.easeInOut.transform(math.min(enter, exit));
@@ -46,6 +51,10 @@ class ExpeditionScene extends CustomPainter {
   late Canvas c;
   late Size size;
   late ValleyView view;
+  bool get _campResting =>
+      model.region == IslandRegion.valley &&
+      model.home &&
+      model.dino == DinoAction.home;
   double get t => reducedMotion ? 0 : model.time;
   final Paint _imagePaint = Paint()..filterQuality = FilterQuality.medium;
   void image(String name, Rect target, {double opacity = 1}) {
@@ -122,14 +131,18 @@ class ExpeditionScene extends CustomPainter {
   void paint(Canvas canvas, Size s) {
     c = canvas;
     size = s;
-    view = ValleyView(s, model.cameraX);
+    view = ValleyView(s, model.cameraX, region: model.region);
     final sky = Paint()
       ..shader = ui.Gradient.linear(Offset.zero, Offset(0, s.height), const [
         Color(0xFFE2EEDD),
         Color(0xFFF7E9C9),
       ]);
     c.drawRect(Offset.zero & s, sky);
-    _sky();
+    if (model.region == IslandRegion.valley) {
+      _sky();
+    } else {
+      _islandSky();
+    }
     c.save();
     c.translate(size.width / 2 - model.cameraX * view.scale, view.horizon);
     c.scale(view.scale);
@@ -179,6 +192,10 @@ class ExpeditionScene extends CustomPainter {
   }
 
   void _world() {
+    if (model.region != IslandRegion.valley) {
+      _islandWorld();
+      return;
+    }
     final left = model.cameraX - size.width / 2 / view.scale - 350,
         right = model.cameraX + size.width / 2 / view.scale + 350;
     // Distant woodland is offset by parallax; foreground geometry uses world coordinates.
@@ -194,9 +211,9 @@ class ExpeditionScene extends CustomPainter {
         opacity: .36,
       );
     }
-    final ground = Path()..moveTo(left, roadHeight(left) - 17);
+    final ground = Path()..moveTo(left, model.terrain(left) - 17);
     for (var x = left; x < right; x += 12) {
-      ground.lineTo(x, roadHeight(x) - 17);
+      ground.lineTo(x, model.terrain(x) - 17);
     }
     ground
       ..lineTo(right, 700)
@@ -234,7 +251,7 @@ class ExpeditionScene extends CustomPainter {
     sprite('fern', 98, 30, 130, 100);
     sprite('nest', 205, 24, 180, 94);
     _sign(421, -19, '河谷', true);
-    _sign(1840, -8, '营地', false);
+    _sign(2040, -8, '果林', true);
     // The echo cave is part of the landscape, not a modal mini-game.
     sprite('rock', 974, -36, 212, 139);
     ellipse(const Offset(979, -65), 32, 33, const Color(0xFF638375));
@@ -263,7 +280,7 @@ class ExpeditionScene extends CustomPainter {
         model.dino != DinoAction.alighting) {
       _dino(
         model.dinoX,
-        roadHeight(model.dinoX) + 4,
+        model.terrain(model.dinoX) + 4,
         1,
         model.dinoX > model.carX ? -1 : 1,
       );
@@ -280,6 +297,9 @@ class ExpeditionScene extends CustomPainter {
       );
     }
     _car();
+    if (model.story.flyerRescued && !_campResting) {
+      _flyer(model.carX + 22, model.terrain(model.carX) - 128, .55);
+    }
     if (model.logPlace == LogPlace.hook) _log();
     for (final p in model.particles) {
       if (reducedMotion && p.radius < 4) continue;
@@ -290,7 +310,22 @@ class ExpeditionScene extends CustomPainter {
         p.color.withValues(alpha: (p.life / .4).clamp(0.0, .85)),
       );
     }
-    if (model.home) {
+    if (_campResting) {
+      if (model.story.picnicReady) sprite('basket', 310, 12, 80, 68);
+      if (model.story.lampFound) {
+        if (model.campLampOn) {
+          ellipse(const Offset(320, -156), 60, 60, const Color(0x33FFEBC0));
+        }
+        sprite(
+          'lantern',
+          320,
+          -125,
+          55,
+          66,
+          opacity: model.campLampOn ? 1 : .45,
+        );
+      }
+      if (model.story.flyerRescued) _flyer(365, -75, .62);
       sprite('fern', 332, 37, 145, 100);
       if (model.fed) sprite('fruit', 221, 9, 30, 30);
     }
@@ -303,9 +338,9 @@ class ExpeditionScene extends CustomPainter {
   }
 
   void _road(double left, double right) {
-    final p = Path()..moveTo(left, roadHeight(left) + 13);
+    final p = Path()..moveTo(left, model.terrain(left) + 13);
     for (var x = left; x < right; x += 8) {
-      p.lineTo(x, roadHeight(x) + 13);
+      p.lineTo(x, model.terrain(x) + 13);
     }
     c.drawPath(
       p,
@@ -334,7 +369,7 @@ class ExpeditionScene extends CustomPainter {
     for (var i = 0; i < 125; i++) {
       final x = i * 20.0;
       if (x < left || x > right || x > riverLeft && x < riverRight) continue;
-      final y = roadHeight(x) + 16 + math.sin(i * 9.3) * 15;
+      final y = model.terrain(x) + 16 + math.sin(i * 9.3) * 15;
       ellipse(Offset(x, y), 1.7 + i % 3, 1.1, const Color(0xFFCCB894));
     }
   }
@@ -459,7 +494,7 @@ class ExpeditionScene extends CustomPainter {
         : math.sin(model.landingBounce * math.pi) * 4;
     if (model.logPlace != LogPlace.hook) {
       ellipse(
-        Offset(model.logX, roadHeight(model.logX) + 5),
+        Offset(model.logX, model.terrain(model.logX) + 5),
         118,
         9,
         const Color(0x224D6352),
@@ -493,7 +528,7 @@ class ExpeditionScene extends CustomPainter {
 
   void _car() {
     final m = model;
-    final ground = roadHeight(m.carX);
+    final ground = model.terrain(m.carX);
     ellipse(Offset(m.carX, ground + 22), 108, 12, const Color(0x27405D4C));
     c.save();
     c.translate(m.carX, ground);
@@ -511,8 +546,18 @@ class ExpeditionScene extends CustomPainter {
         );
       }
     }
+    if (!_campResting &&
+        m.story.picnicReady &&
+        (m.region != IslandRegion.orchard || m.orchard.basketLift >= 1)) {
+      sprite('basket', -55, -70, 45, 38);
+    }
+    if (!_campResting && m.story.lampFound) sprite('lantern', 65, -87, 27, 33);
     if (m.fruitCarried && !m.fed) sprite('fruit', -57, -74, 45, 45);
-    if (m.dino == DinoAction.riding) _dino(-50, -62, .57, 1, local: true);
+    if (m.dino == DinoAction.riding &&
+        !(m.region == IslandRegion.orchard &&
+            (m.orchard.helper > .5 || m.orchard.cleared && !m.orchard.fed))) {
+      _dino(-50, -62, .57, 1, local: true);
+    }
     if (m.dino == DinoAction.boarding || m.dino == DinoAction.alighting) {
       final progress = Curves.easeInOut.transform(m.boarding.clamp(0.0, 1.0));
       final f = m.dino == DinoAction.alighting ? 1 - progress : progress;
@@ -553,7 +598,7 @@ class ExpeditionScene extends CustomPainter {
       );
     }
     c.restore();
-    _crane();
+    if (model.region == IslandRegion.valley) _crane();
   }
 
   void _crane() {

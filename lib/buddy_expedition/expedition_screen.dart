@@ -8,6 +8,7 @@ import 'expedition_assets.dart';
 import 'expedition_controller.dart';
 import 'expedition_models.dart';
 import 'expedition_scene.dart';
+import 'expedition_world.dart';
 
 class ExpeditionScreen extends StatefulWidget {
   const ExpeditionScreen({
@@ -32,6 +33,9 @@ class _ExpeditionState extends State<ExpeditionScreen>
   int _speechGeneration = 0;
   Timer? _saveTimer;
   int? _pointer;
+  String? _chapterTarget;
+  int _seenRegion = 0;
+  bool _menuOpen = false;
   Offset? _down, _touch;
   double _downTime = 0;
   bool _moved = false, _pickedDown = false;
@@ -54,11 +58,17 @@ class _ExpeditionState extends State<ExpeditionScreen>
       await Future.wait([assets.load(), widget.progress.ready]);
       if (!mounted) return;
       model.restore(widget.progress.expeditionJournal.checkpoint);
+      _seenRegion = model.regionRevision;
+      caption.value = ExpeditionEvent(
+        "resume",
+        islandRegions[model.region]!.english,
+        model.hint,
+      );
       setState(() {
         loaded = true;
         failed = false;
       });
-      unawaited(widget.audio.speak('欢迎来到河谷！按住小车前面的路开车，松手停。'));
+      unawaited(widget.audio.speak(model.hint));
     } catch (_) {
       if (mounted) setState(() => failed = true);
     }
@@ -75,10 +85,18 @@ class _ExpeditionState extends State<ExpeditionScreen>
     if (_gesture == ExpeditionInput.road &&
         _pointer != null &&
         _touch != null &&
-        model.driveTarget != null) {
-      model.driveTarget = view.toWorld(_touch!).dx.clamp(120.0, valleyEnd);
+        (model.driveTarget != null || model.dino == DinoAction.boarding)) {
+      model.driveTarget = view.toWorld(_touch!).dx.clamp(120.0, model.worldEnd);
     }
     model.update(dt);
+    if (_seenRegion != model.regionRevision) {
+      _seenRegion = model.regionRevision;
+      _pointer = null;
+      _touch = null;
+      _down = null;
+      _gesture = ExpeditionInput.none;
+      _chapterTarget = null;
+    }
     _events();
     if (model.takeChanged()) {
       _queueSave();
@@ -140,7 +158,8 @@ class _ExpeditionState extends State<ExpeditionScreen>
     }
   }
 
-  ValleyView get view => ValleyView(_stageSize, model.cameraX);
+  ValleyView get view =>
+      ValleyView(_stageSize, model.cameraX, region: model.region);
   bool _near(Offset p, Offset target, double radius) =>
       view.toScreen(p).distanceSquared.isFinite &&
       (view.toScreen(p) - view.toScreen(target)).distance <
@@ -149,7 +168,9 @@ class _ExpeditionState extends State<ExpeditionScreen>
       (context.findRenderObject()! as RenderBox).globalToLocal(global);
 
   void _downPointer(PointerDownEvent e) {
-    if (!loaded || model.paused || _pointer != null) return;
+    if (!loaded || model.paused || model.transition > 0 || _pointer != null) {
+      return;
+    }
     _pointer = e.pointer;
     _down = _localPosition(e.position);
     _touch = _localPosition(e.position);
@@ -157,7 +178,54 @@ class _ExpeditionState extends State<ExpeditionScreen>
     _moved = false;
     _pickedDown = false;
     final p = view.toWorld(_localPosition(e.position));
-    if (model.logPlace == LogPlace.hook) {
+    _chapterTarget = null;
+    if (model.region == IslandRegion.bay && model.bay.holding && p.dy < 30) {
+      _chapterTarget = 'rescue-basket';
+      model.chapterGesture = 'rescue-basket';
+      model.chapterMove(p);
+      _gesture = ExpeditionInput.none;
+      setState(() {});
+      return;
+    }
+    final targets = model.chapterTargets.toList()
+      ..sort(
+        (a, b) =>
+            (a.at - p).distanceSquared.compareTo((b.at - p).distanceSquared),
+      );
+    for (final target in targets) {
+      if (p.dy < model.terrain(p.dx) + 12 &&
+          _near(p, target.at, target.radius)) {
+        _chapterTarget = target.id;
+        model.chapterDown(target.id, target.at);
+        _gesture = ExpeditionInput.none;
+        _events();
+        _queueSave();
+        hud.value++;
+        setState(() {});
+        return;
+      }
+    }
+    if (model.region != IslandRegion.valley) {
+      if (p.dy >= model.terrain(p.dx) - 15 &&
+          p.dy < model.terrain(p.dx) + 150) {
+        _gesture = ExpeditionInput.road;
+        model.drive(p.dx);
+      } else {
+        model.honk();
+        _gesture = ExpeditionInput.none;
+      }
+      _events();
+      hud.value++;
+      setState(() {});
+      return;
+    }
+    // The clear road band wins over nearby bridge, fruit and passenger hot zones.
+    if (p.dy >= model.terrain(p.dx) + 18 &&
+        p.dy < model.terrain(p.dx) + 150 &&
+        model.logPlace != LogPlace.hook) {
+      _gesture = ExpeditionInput.road;
+      model.drive(p.dx);
+    } else if (model.logPlace == LogPlace.hook) {
       _gesture = ExpeditionInput.hook;
       model.beginHook(p - const Offset(0, 24));
     } else if (model.riverWork &&
@@ -166,7 +234,11 @@ class _ExpeditionState extends State<ExpeditionScreen>
       model.beginHook(p - const Offset(0, 24));
     } else if (model.riverWork &&
         !(model.bridge &&
-            _near(p, Offset(model.dinoX, roadHeight(model.dinoX) - 65), 60)) &&
+            _near(
+              p,
+              Offset(model.dinoX, model.terrain(model.dinoX) - 65),
+              60,
+            )) &&
         (p.dx - model.logX).abs() < 155 &&
         (p.dy - model.logY).abs() < 60) {
       _gesture = ExpeditionInput.hook;
@@ -178,15 +250,15 @@ class _ExpeditionState extends State<ExpeditionScreen>
       p,
       Offset(
         model.dino == DinoAction.riding ? model.carX - 55 : model.dinoX,
-        roadHeight(model.dinoX) - 65,
+        model.terrain(model.dinoX) - 65,
       ),
       60,
     )) {
       model.interactDino();
       _gesture = ExpeditionInput.none;
     } else if ((p.dx - model.carX).abs() < 100 &&
-        p.dy < roadHeight(model.carX) - 20 &&
-        p.dy > roadHeight(model.carX) - 150) {
+        p.dy < model.terrain(model.carX) - 20 &&
+        p.dy > model.terrain(model.carX) - 150) {
       model.honk();
       _gesture = ExpeditionInput.none;
     } else if (p.dy < 18 &&
@@ -211,18 +283,35 @@ class _ExpeditionState extends State<ExpeditionScreen>
     _touch = _localPosition(e.position);
     _moved |= (_localPosition(e.position) - _down!).distance > 10;
     final p = view.toWorld(_localPosition(e.position));
+    if (_chapterTarget != null) {
+      model.chapterMove(p);
+      setState(() {});
+      return;
+    }
     if (_gesture == ExpeditionInput.hook) {
       model.moveHook(p - const Offset(0, 24));
     }
     if (_gesture == ExpeditionInput.fruit) model.moveFruit(p);
     if (_gesture == ExpeditionInput.road) {
-      model.driveTarget = p.dx.clamp(120.0, valleyEnd);
+      model.driveTarget = p.dx.clamp(120.0, model.worldEnd);
     }
     setState(() {});
   }
 
   void _upPointer(PointerUpEvent e) {
     if (e.pointer != _pointer) return;
+    if (_chapterTarget != null) {
+      model.chapterUp(tapped: !_moved);
+      _chapterTarget = null;
+      _pointer = null;
+      _touch = null;
+      _down = null;
+      _events();
+      _queueSave();
+      hud.value++;
+      setState(() {});
+      return;
+    }
     final p = view.toWorld(_localPosition(e.position));
     if (_gesture == ExpeditionInput.road) {
       if (!_moved && model.time - _downTime < .24) {
@@ -242,9 +331,11 @@ class _ExpeditionState extends State<ExpeditionScreen>
     }
     if (_gesture == ExpeditionInput.fruit) {
       if (!_moved && model.home && (model.carX - model.dinoX).abs() < 180) {
-        model.moveFruit(Offset(model.dinoX, roadHeight(model.dinoX)));
+        model.moveFruit(Offset(model.dinoX, model.terrain(model.dinoX)));
       } else if (!_moved) {
-        model.moveFruit(Offset(model.carX - 60, roadHeight(model.carX) - 90));
+        model.moveFruit(
+          Offset(model.carX - 60, model.terrain(model.carX) - 90),
+        );
       }
       model.releaseFruit();
     }
@@ -259,6 +350,8 @@ class _ExpeditionState extends State<ExpeditionScreen>
   }
 
   void _cancel() {
+    if (_chapterTarget != null) model.chapterUp(cancelled: true);
+    _chapterTarget = null;
     _pointer = null;
     _touch = null;
     _down = null;
@@ -272,7 +365,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _previous = null;
     if (state == AppLifecycleState.resumed) {
-      model.resume();
+      if (!_menuOpen) model.resume();
     } else {
       _cancel();
       model.pause();
@@ -285,6 +378,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
   }
 
   Future<void> _pause() async {
+    _menuOpen = true;
     _cancel();
     model.pause();
     unawaited(widget.audio.stopSpeech());
@@ -315,6 +409,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
     );
     if (!mounted) return;
     if (result == 'leave') {
+      _menuOpen = false;
       Navigator.pop(context);
       return;
     }
@@ -323,7 +418,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('重新开始河谷冒险？'),
-          content: const Text('只重置这个样章，其他游戏和作品不变。'),
+          content: const Text('只重玩恐龙岛的故事，其他游戏、作品和旅行纪念保留。'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -338,7 +433,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
       );
       if (!mounted) return;
       if (yes == true) {
-        model.restore(const ValleyCheckpoint());
+        model.replayStory();
         _flush();
         caption.value = const ExpeditionEvent(
           'welcome',
@@ -347,8 +442,170 @@ class _ExpeditionState extends State<ExpeditionScreen>
         );
       }
     }
+    _menuOpen = false;
     model.resume();
     _previous = null;
+    hud.value++;
+  }
+
+  Future<void> _map() async {
+    _menuOpen = true;
+    _cancel();
+    model.pause();
+    _flush();
+    unawaited(widget.audio.stopSpeech());
+    final destination = await showModalBottomSheet<IslandRegion>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFFFF5DE),
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                model.story.celebrated ? '朋友们的旅行纪念' : '我们的探险绘本',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: expeditionInk,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                model.story.celebrated
+                    ? '搭好桥、分享果子、找到星灯、带小翼龙回家。每个地方还能再去玩！'
+                    : model.hint,
+              ),
+              if (model.story.memories > 0)
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3EACF),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        '我们一起走过恐龙岛',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 19,
+                          color: expeditionInk,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          for (final name in [
+                            'car',
+                            'basket',
+                            'lantern',
+                            'flyer',
+                          ])
+                            Flexible(
+                              child: Image.asset(
+                                'assets/expedition/$name.png',
+                                height: 65,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        '搭桥 · 分享 · 点亮 · 救助 · 团聚',
+                        style: TextStyle(color: expeditionInk),
+                      ),
+                    ],
+                  ),
+                ),
+              if (model.story.memories > 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text('完成过 ${model.story.memories} 次朋友冒险 · 纪念记录会保留'),
+                ),
+              for (final region in IslandRegion.values)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Material(
+                    color: islandRegions[region]!.sky,
+                    borderRadius: BorderRadius.circular(22),
+                    child: InkWell(
+                      key: ValueKey('island-map-${region.name}'),
+                      borderRadius: BorderRadius.circular(22),
+                      onTap: model.story.visited.contains(region)
+                          ? () => Navigator.pop(context, region)
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Image.asset(
+                              'assets/expedition/${const ['tent', 'basket', 'lantern', 'boat'][region.index]}.png',
+                              width: 72,
+                              height: 56,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    islandRegions[region]!.title,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: region == IslandRegion.cave
+                                          ? Colors.white
+                                          : expeditionInk,
+                                    ),
+                                  ),
+                                  Text(
+                                    model.story.visited.contains(region)
+                                        ? '回去看看 · Visit again'
+                                        : '继续探险会到达这里',
+                                    style: TextStyle(
+                                      color: region == IslandRegion.cave
+                                          ? Colors.white70
+                                          : expeditionInk,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              model.story.visited.contains(region)
+                                  ? Icons.arrow_forward_rounded
+                                  : Icons.explore_outlined,
+                              color: region == IslandRegion.cave
+                                  ? Colors.white
+                                  : expeditionInk,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (destination != null) model.travel(destination);
+    _menuOpen = false;
+    model.resume();
+    _previous = null;
+    _events();
+    _queueSave();
     hud.value++;
   }
 
@@ -463,7 +720,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            '河谷的第一位朋友',
+                            '朋友们的恐龙岛',
                             style: TextStyle(
                               fontSize: 12,
                               color: expeditionInk.withValues(alpha: .65),
@@ -496,6 +753,12 @@ class _ExpeditionState extends State<ExpeditionScreen>
                       ),
                     ),
                     const SizedBox(width: 6),
+                    _round(
+                      Icons.map_outlined,
+                      '探险绘本',
+                      loaded ? _map : () {},
+                      'expedition-map',
+                    ),
                     _round(
                       Icons.pause_rounded,
                       '暂停',
@@ -612,7 +875,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
               ),
               label: '向右慢慢开车',
               action: () => model.drive(
-                (model.carX + 250).clamp(120.0, valleyEnd),
+                (model.carX + 250).clamp(120.0, model.worldEnd),
                 automatic: true,
               ),
             ),
@@ -622,41 +885,55 @@ class _ExpeditionState extends State<ExpeditionScreen>
               ),
               label: '向左慢慢开车',
               action: () => model.drive(
-                (model.carX - 250).clamp(120.0, valleyEnd),
+                (model.carX - 250).clamp(120.0, model.worldEnd),
                 automatic: true,
               ),
             ),
-            'expedition-log': (
-              at: model.logPosition,
-              label: '提起木头，再点河面放下',
-              action: () {
-                model.pickLog();
-                _events();
-              },
-            ),
-            'expedition-hook': (
-              at: model.hook,
-              label: '吊钩',
-              action: () {
-                model.pickLog();
-                _events();
-              },
-            ),
-            'expedition-dino': (
-              at: Offset(model.dinoX, roadHeight(model.dinoX) - 65),
-              label: '邀请小恐龙上车',
-              action: () {
-                model.interactDino();
-                _events();
-              },
-            ),
-            'expedition-bridge': (
-              at: const Offset(bridgeCenter, -19),
-              label: '把木头放在河的两岸',
-              action: () {
-                model.placeAt(const Offset(bridgeCenter, -19));
-              },
-            ),
+            for (final target in model.chapterTargets)
+              'island-${target.id}': (
+                at: target.at,
+                label: target.label,
+                action: () {
+                  model.chapterDown(target.id, target.at);
+                  model.chapterUp(tapped: true);
+                  _events();
+                },
+              ),
+            if (model.region == IslandRegion.valley)
+              'expedition-log': (
+                at: model.logPosition,
+                label: '提起木头，再点河面放下',
+                action: () {
+                  model.pickLog();
+                  _events();
+                },
+              ),
+            if (model.region == IslandRegion.valley)
+              'expedition-hook': (
+                at: model.hook,
+                label: '吊钩',
+                action: () {
+                  model.pickLog();
+                  _events();
+                },
+              ),
+            if (model.region == IslandRegion.valley)
+              'expedition-dino': (
+                at: Offset(model.dinoX, model.terrain(model.dinoX) - 65),
+                label: '邀请小恐龙上车',
+                action: () {
+                  model.interactDino();
+                  _events();
+                },
+              ),
+            if (model.region == IslandRegion.valley)
+              'expedition-bridge': (
+                at: const Offset(bridgeCenter, -19),
+                label: '把木头放在河的两岸',
+                action: () {
+                  model.placeAt(const Offset(bridgeCenter, -19));
+                },
+              ),
           }.entries)
         Positioned(
           left: view.toScreen(entry.value.at).dx - 30,

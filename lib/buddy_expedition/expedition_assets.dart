@@ -3,6 +3,14 @@ import 'package:flutter/services.dart';
 
 class ExpeditionAssets {
   static const names = [
+    'door',
+    'basket',
+    'mushroom',
+    'lantern',
+    'cave_arch',
+    'boat',
+    'flyer',
+    'wing',
     'car',
     'wheel',
     'log',

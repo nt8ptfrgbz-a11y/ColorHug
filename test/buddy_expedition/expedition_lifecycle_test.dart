@@ -111,7 +111,13 @@ void main() {
     await g.cancel();
     t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await t.pump();
-    await a.toggle();
+    final muted = a.toggle();
+    await t.pump(const Duration(milliseconds: 50));
+    await t.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await t.pump(const Duration(milliseconds: 50));
+    await muted;
     final before = a.lastSpokenText;
     await helper.grabBridge(t);
     expect(a.lastSpokenText, before);

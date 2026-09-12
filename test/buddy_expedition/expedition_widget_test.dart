@@ -25,7 +25,11 @@ ExpeditionController observed(WidgetTester t) => painter(t).model;
 Offset screenPoint(WidgetTester t, Offset world) {
   final box = t.getRect(find.byKey(const ValueKey('expedition-world')));
   return box.topLeft +
-      ValleyView(box.size, observed(t).cameraX).toScreen(world);
+      ValleyView(
+        box.size,
+        observed(t).cameraX,
+        region: observed(t).region,
+      ).toScreen(world);
 }
 
 Future<void> load(
@@ -39,14 +43,16 @@ Future<void> load(
   t.view.devicePixelRatio = 1;
   addTearDown(t.view.resetPhysicalSize);
   addTearDown(t.view.resetDevicePixelRatio);
-  await t.pumpWidget(
-    MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(
-          size: size,
-          textScaler: TextScaler.linear(textScale),
+  await t.runAsync(
+    () => t.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(
+            size: size,
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: ExpeditionScreen(progress: p, audio: a),
         ),
-        child: ExpeditionScreen(progress: p, audio: a),
       ),
     ),
   );
@@ -69,7 +75,11 @@ Future<void> load(
 
 Future<void> holdRoad(WidgetTester t, bool right, double seconds) async {
   final box = t.getRect(find.byKey(const ValueKey('expedition-world')));
-  final view = ValleyView(box.size, observed(t).cameraX);
+  final view = ValleyView(
+    box.size,
+    observed(t).cameraX,
+    region: observed(t).region,
+  );
   final touch = await t.startGesture(
     box.topLeft +
         Offset(box.width * (right ? .91 : .08), view.horizon + 35 * view.scale),

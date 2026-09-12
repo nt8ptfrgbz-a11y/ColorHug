@@ -222,7 +222,7 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        '恐龙岛 · 河谷样章',
+                        '恐龙岛 · 朋友们的大冒险',
                         style: TextStyle(color: Color(0xFF758B6C)),
                       ),
                       const SizedBox(height: 12),
@@ -261,14 +261,14 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
                       Text(
                         progress.expeditionJournal.checkpoint.home
                             ? '小恐龙在营地等你，一起出去玩吧！'
-                            : '开探险车、吊木搭桥，接一位新朋友回家',
+                            : '河谷、果林、萤火山洞和海湾，带朋友一起回家',
                         style: const TextStyle(color: buddyInk),
                       ),
                       const SizedBox(height: 8),
                       const Row(
                         children: [
                           Text(
-                            '走，去河谷！',
+                            '出发，去恐龙岛！',
                             style: TextStyle(
                               color: Color(0xFF427763),
                               fontWeight: FontWeight.bold,

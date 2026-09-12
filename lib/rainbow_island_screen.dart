@@ -77,7 +77,7 @@ class RainbowIslandScreen extends StatelessWidget {
                                       width: cardWidth,
                                       icon: '🌷',
                                       title: '小伙伴乐园',
-                                      subtitle: '河谷探险样章与 17 个小世界 · 玩着听英语',
+                                      subtitle: '恐龙岛完整冒险与 17 个小世界 · 玩着听英语',
                                       badge: '3–5岁 · 一起玩，一起成长',
                                       colors: const [
                                         Color(0xFF63AA90),

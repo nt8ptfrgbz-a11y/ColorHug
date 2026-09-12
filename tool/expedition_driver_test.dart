@@ -4,14 +4,21 @@ import 'package:flutter_driver/flutter_driver.dart';
 
 Future<void> main() async {
   final d = await FlutterDriver.connect();
-  final output = Directory('build/expedition-native')
-    ..createSync(recursive: true);
+  final output = Directory('build/island-native')..createSync(recursive: true);
   Future<void> tap(String key) async {
     await d.tap(find.byValueKey(key), timeout: const Duration(seconds: 20));
     await Future<void>.delayed(const Duration(milliseconds: 600));
   }
 
-  Future<Map> state() async => jsonDecode(await d.requestData('state')) as Map;
+  Future<Map> state() async {
+    for (var i = 0; i < 20; i++) {
+      final raw = await d.requestData('state');
+      if (raw != 'no-scene') return jsonDecode(raw) as Map;
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    throw StateError('The gameplay scene is not mounted');
+  }
+
   Future<void> shot(String name) async {
     await File('${output.path}/$name.png').writeAsBytes(await d.screenshot());
     stdout.writeln('NATIVE SHOT $name ${await state()}');
@@ -53,20 +60,66 @@ Future<void> main() async {
       await Future<void>.delayed(const Duration(seconds: 2));
       require((await state())['joined'] == true, 'Companion not invited');
       await shot('06-riding');
-      await touch('left', 16000);
+      await touch('right', 15000);
+      require((await state())['region'] == 'orchard', 'Orchard not reached');
+      await touch('right', 5000);
+      await shot('07-orchard');
+      await touch('stone', 4000);
+      await touch('right', 4800);
+      await touch('tree', 80);
+      await Future<void>.delayed(const Duration(seconds: 2));
+      for (var i = 0; i < 4; i++) {
+        await touch('apple-$i', 80);
+      }
+      require((await state())['basket'] == 4, 'Apples not collected');
+      await touch('share', 80);
+      await touch('basket', 80);
+      await shot('08-picnic');
+      await touch('right', 10000);
+      require((await state())['region'] == 'cave', 'Cave not reached');
+      await touch('right', 9000);
+      await touch('mural', 80);
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await shot('09-cave');
+      await touch('lever', 80);
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await touch('lamp', 80);
+      await touch('right', 9000);
+      require((await state())['region'] == 'bay', 'Bay not reached');
+      await touch('right', 7000);
+      await touch('perch', 80);
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await shot('10-rescue');
+      await touch('landing', 80);
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await touch('right', 9000);
+      await touch('rope', 80);
+      await Future<void>.delayed(const Duration(seconds: 4));
+      await touch('right', 3000);
+      await touch('rope', 80);
       await Future<void>.delayed(const Duration(seconds: 3));
-      require((await state())['home'] == true, 'Home outcome not reached');
-      await shot('07-home');
-      await d.requestData(jsonEncode({'target': 'finish'}));
+      await shot('11-sailing');
+      await Future<void>.delayed(const Duration(seconds: 9));
+      require((await state())['region'] == 'valley', 'Ferry did not return');
+      await touch('left', 4000);
+      await Future<void>.delayed(const Duration(seconds: 3));
+      require(
+        (await state())['story']['celebrated'] == true,
+        'Reunion not complete',
+      );
+      await shot('12-reunion');
       await tap('expedition-back');
       await d.scrollIntoView(find.byValueKey('buddy-expedition'));
       await tap('buddy-expedition');
       await d.waitFor(find.byValueKey('expedition-world'));
       await Future<void>.delayed(const Duration(seconds: 2));
-      require((await state())['home'] == true, 'Checkpoint not restored');
+      require(
+        (await state())['story']['celebrated'] == true,
+        'Story checkpoint not restored',
+      );
       await shot('08-restored');
       stdout.writeln(
-        'NATIVE PASS: raw-pointer driving, grab, bridge, invite, return home and restore',
+        'NATIVE PASS: complete four-region adventure, ferry, reunion and restore',
       );
     });
   } finally {
