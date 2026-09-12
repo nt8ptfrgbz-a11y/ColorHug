@@ -42,6 +42,8 @@ dependencies:
   flutter_embed_unity: ^2.0.0
 
 dev_dependencies:
+  flutter_driver:
+    sdk: flutter
   shared_preferences_platform_interface: ^2.4.2
   flutter_test:
     sdk: flutter
@@ -73,6 +75,7 @@ flutter:
     - assets/audio/
     - assets/fruit_game/
     - assets/ultra/
+    - assets/expedition/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

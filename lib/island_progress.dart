@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'buddy_models.dart';
+import 'buddy_expedition/expedition_journal.dart';
+import 'buddy_expedition/expedition_models.dart';
+import 'buddy_play/buddy_play_catalog.dart';
+import 'buddy_play/buddy_play_journal.dart';
 import 'buddy_adventure_models.dart';
 
 @immutable
@@ -195,6 +199,43 @@ class IslandProgress extends ChangeNotifier {
   factory IslandProgress.persistent() {
     return IslandProgress._(SharedPreferencesAsync());
   }
+
+  static const _expeditionKey = 'color_hug.river_valley_v1';
+  final ExpeditionJournal expeditionJournal = ExpeditionJournal();
+  void saveExpedition(ValleyCheckpoint value, {bool notify = true}) {
+    if (_disposed || !expeditionJournal.save(value)) return;
+    if (notify) notifyListeners();
+    _persist();
+  }
+
+  static const _playKey = 'color_hug.play_journal_v1';
+  final BuddyPlayJournal playJournal = BuddyPlayJournal();
+
+  void savePlay(
+    BuddyPlay game,
+    Map<String, dynamic> data, {
+    bool collect = false,
+    bool notify = true,
+  }) {
+    if (_disposed || !playJournal.save(game, data, collect: collect)) return;
+    if (notify) notifyListeners();
+    _persist();
+  }
+
+  void encounterPlayWord(BuddyPlay game, String word) {
+    if (!playCatalog[game]!.words.any((v) => v.english == word)) return;
+    if (_buddyWords.add(word)) {
+      notifyListeners();
+      _persist();
+    }
+  }
+
+  void discoverPlay(BuddyPlay game, String discovery) {
+    if (!RegExp(r'^[a-z0-9-]{1,60}$').hasMatch(discovery)) return;
+    awardStar(token: 'play-${game.name}-$discovery');
+  }
+
+  int playDiscoveries(BuddyPlay game) => _rewardCount('play-${game.name}-');
 
   static const _buddyKey = 'color_hug.buddy_journal_v1';
   static const _starsKey = 'color_hug.stars';
@@ -430,7 +471,23 @@ class IslandProgress extends ChangeNotifier {
       final storedTokens =
           await preferences.getStringList(_rewardTokensKey) ?? const [];
       final rawBuddy = await preferences.getString(_buddyKey);
+      final rawPlay = await preferences.getString(_playKey);
+      final rawExpedition = await preferences.getString(_expeditionKey);
       if (_disposed) return;
+      if (rawExpedition != null) {
+        try {
+          expeditionJournal.merge(jsonDecode(rawExpedition));
+        } catch (_) {
+          /* Keep other games independent. */
+        }
+      }
+      if (rawPlay != null) {
+        try {
+          playJournal.merge(jsonDecode(rawPlay));
+        } catch (_) {
+          /* Older progress is independent of the toy journal. */
+        }
+      }
       if (rawBuddy != null) {
         try {
           final data = jsonDecode(rawBuddy);
@@ -506,6 +563,11 @@ class IslandProgress extends ChangeNotifier {
     if (preferences == null) return;
     try {
       await Future.wait([
+        preferences.setString(
+          _expeditionKey,
+          jsonEncode(expeditionJournal.toJson()),
+        ),
+        preferences.setString(_playKey, jsonEncode(playJournal.toJson())),
         preferences.setString(
           _buddyKey,
           jsonEncode({

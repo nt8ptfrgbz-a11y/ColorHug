@@ -8,6 +8,9 @@ import 'buddy_adventure_models.dart';
 import 'buddy_hide_screen.dart';
 import 'buddy_juice_screen.dart';
 import 'buddy_models.dart';
+import 'buddy_expedition/expedition_screen.dart';
+import 'buddy_play/buddy_play_catalog.dart';
+import 'buddy_play/buddy_play_routes.dart';
 import 'buddy_widgets.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
@@ -25,8 +28,7 @@ class BuddyHomeScreen extends StatefulWidget {
 }
 
 class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
-  static const _welcome =
-      '欢迎来抱抱的小家！九个小世界等着你，有果汁屋、恐龙蛋、天气工厂、软糖桥和小剧场。点喜欢的图片，我们一起出发！';
+  static const _welcome = '欢迎来抱抱的小家！新的玩具世界开门啦。滚小球、开汽车、变影子，点喜欢的图片，一起玩吧！';
   bool _greeting = false;
   Timer? _greetingTimer;
 
@@ -196,6 +198,148 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
               ],
             ),
             const SizedBox(height: 24),
+            Material(
+              color: const Color(0xFFDCE7CC),
+              borderRadius: BorderRadius.circular(28),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                key: const ValueKey('buddy-expedition'),
+                onTap: () => _open(
+                  ExpeditionScreen(progress: progress, audio: widget.audio),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '抱抱探险队',
+                        style: TextStyle(
+                          fontSize: 25,
+                          color: buddyInk,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '恐龙岛 · 河谷样章',
+                        style: TextStyle(color: Color(0xFF758B6C)),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 120,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              right: 5,
+                              bottom: 0,
+                              child: Image.asset(
+                                'assets/expedition/tree.png',
+                                height: 140,
+                              ),
+                            ),
+                            Positioned(
+                              left: 0,
+                              bottom: 0,
+                              child: Image.asset(
+                                'assets/expedition/car.png',
+                                width: 205,
+                              ),
+                            ),
+                            Positioned(
+                              right: 45,
+                              bottom: 8,
+                              child: Image.asset(
+                                'assets/expedition/dino_head.png',
+                                width: 100,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        progress.expeditionJournal.checkpoint.home
+                            ? '小恐龙在营地等你，一起出去玩吧！'
+                            : '开探险车、吊木搭桥，接一位新朋友回家',
+                        style: const TextStyle(color: buddyInk),
+                      ),
+                      const SizedBox(height: 8),
+                      const Row(
+                        children: [
+                          Text(
+                            '走，去河谷！',
+                            style: TextStyle(
+                              color: Color(0xFF427763),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Color(0xFF427763),
+                            size: 19,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 26),
+            const Text(
+              '✨ 新玩具世界',
+              style: TextStyle(
+                color: buddyInk,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              '动动小手，每次都能玩出新花样 · 玩着听英语',
+              style: TextStyle(color: Color(0xFF738580)),
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 700 ? 3 : 2;
+                final width =
+                    (constraints.maxWidth - (columns - 1) * 12) / columns;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final game in BuddyPlay.values)
+                      _PlayCard(
+                        key: ValueKey('buddy-play-${game.name}'),
+                        width: width,
+                        icon: playCatalog[game]!.icon,
+                        title: playCatalog[game]!.title,
+                        subtitle: playCatalog[game]!.hint,
+                        note: progress.playDiscoveries(game) == 0
+                            ? '新玩具 · 点我出发'
+                            : '${progress.playDiscoveries(game)} 个小发现 · ${progress.playJournal.album(game).length} 个收藏',
+                        color: playCatalog[game]!.color.withValues(alpha: .55),
+                        onTap: () => _open(
+                          buddyPlayScreen(game, progress, widget.audio),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 26),
+            const Text(
+              '🌷 老朋友的小世界',
+              style: TextStyle(
+                color: buddyInk,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 14),
             LayoutBuilder(
               builder: (context, constraints) {
                 final columns = constraints.maxWidth >= 700 ? 3 : 2;
@@ -338,7 +482,7 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
             if (progress.buddyWords.isNotEmpty) ...[
               const SizedBox(height: 26),
               const Text(
-                '👂 一起听过的词语',
+                '👂 一起发现的词语',
                 style: TextStyle(
                   color: buddyInk,
                   fontSize: 20,
@@ -353,7 +497,12 @@ class _BuddyHomeScreenState extends State<BuddyHomeScreen> {
                   for (final word in progress.buddyWords.toList()..sort())
                     ActionChip(
                       avatar: const Icon(Icons.volume_up_rounded, size: 17),
-                      label: Text(word),
+                      label: Text(
+                        playWord(word) == null
+                            ? word
+                            : '${playWord(word)!.icon} $word',
+                      ),
+                      tooltip: playWord(word)?.chinese,
                       onPressed: () => widget.audio.speakEnglish(word),
                     ),
                 ],
@@ -394,7 +543,7 @@ class _PlayCard extends StatelessWidget {
           padding: EdgeInsets.all(width < 240 ? 12 : 20),
           child: width < 240
               ? SizedBox(
-                  height: 152,
+                  height: 180 * MediaQuery.textScalerOf(context).scale(1),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

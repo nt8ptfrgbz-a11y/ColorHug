@@ -6,6 +6,22 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum GameSound {
+  expeditionEngine,
+  expeditionGrab,
+  expeditionWood,
+  expeditionSplash,
+  expeditionEcho,
+  expeditionDino,
+  expeditionHome,
+  bounce,
+  snip,
+  splash,
+  horn,
+  squish,
+  drum,
+  bell,
+  frog,
+  cat,
   tap,
   correct,
   wrong,
@@ -43,7 +59,10 @@ const _speechProfiles =
 
 class GameAudioController extends ChangeNotifier {
   GameAudioController._({this._speech, this._effects, this._preferences}) {
-    if (_preferences != null) {
+    _speech?.setCompletionHandler(_finishUtterance);
+    _speech?.setCancelHandler(_finishUtterance);
+    _speech?.setErrorHandler((_) => _finishUtterance());
+    if (_preferences != null || _speech != null) {
       _ready = _initialize();
       unawaited(_ready);
     }
@@ -59,8 +78,30 @@ class GameAudioController extends ChangeNotifier {
 
   factory GameAudioController.silent() => GameAudioController._();
 
+  @visibleForTesting
+  factory GameAudioController.withSpeech(FlutterTts speech) =>
+      GameAudioController._(speech: speech);
+
   static const _enabledKey = 'color_hug.audio_enabled';
   static const _soundFiles = <GameSound, String>{
+    GameSound.expeditionEngine: 'audio/expedition_engine.wav',
+    GameSound.expeditionGrab: 'audio/expedition_grab.wav',
+    GameSound.expeditionWood: 'audio/expedition_wood.wav',
+    GameSound.expeditionSplash: 'audio/expedition_splash.wav',
+    GameSound.expeditionEcho: 'audio/expedition_echo.wav',
+    GameSound.expeditionDino: 'audio/expedition_dino.wav',
+    GameSound.expeditionHome: 'audio/expedition_home.wav',
+
+    GameSound.bounce: 'audio/play_bounce.wav',
+    GameSound.snip: 'audio/play_snip.wav',
+    GameSound.splash: 'audio/play_splash.wav',
+    GameSound.horn: 'audio/play_horn.wav',
+    GameSound.squish: 'audio/play_squish.wav',
+    GameSound.drum: 'audio/play_drum.wav',
+    GameSound.bell: 'audio/play_bell.wav',
+    GameSound.frog: 'audio/play_frog.wav',
+    GameSound.cat: 'audio/play_cat.wav',
+
     GameSound.tap: 'audio/tap.wav',
     GameSound.correct: 'audio/correct.wav',
     GameSound.wrong: 'audio/wrong.wav',
@@ -82,6 +123,38 @@ class GameAudioController extends ChangeNotifier {
   bool _enabled = true;
   bool _disposed = false;
   int _speechRequest = 0;
+  int _effectRequest = 0;
+  Future<void> _nativeCommands = Future<void>.value();
+  Completer<void>? _utterance;
+
+  void _finishUtterance() {
+    final pending = _utterance;
+    _utterance = null;
+    if (pending != null && !pending.isCompleted) pending.complete();
+  }
+
+  Future<void> _nativeCommand(Future<void> Function() action) {
+    final next = _nativeCommands.then((_) => action());
+    _nativeCommands = next.catchError((Object _) {});
+    return next;
+  }
+
+  Future<void> _stopNativeSpeech() async {
+    final pending = _utterance;
+    try {
+      await _speech?.stop();
+      // Some system engines omit cancellation callbacks. Never block navigation.
+      if (pending != null) {
+        await pending.future.timeout(
+          const Duration(milliseconds: 500),
+          onTimeout: () {},
+        );
+      }
+    } finally {
+      _finishUtterance();
+    }
+  }
+
   Future<void> _ready = Future<void>.value();
   final Map<GameVoice, Map<String, String>> _preferredVoices = {};
 
@@ -121,6 +194,7 @@ class GameAudioController extends ChangeNotifier {
       _enabled = false;
       notifyListeners();
       await stopSpeech();
+      await stopEffects();
     } else {
       _enabled = true;
       notifyListeners();
@@ -153,34 +227,57 @@ class GameAudioController extends ChangeNotifier {
   }) async {
     final request = ++_speechRequest;
     await _ready;
-    if (!_enabled || _disposed || request != _speechRequest) return;
+    bool current() => _enabled && !_disposed && request == _speechRequest;
+    if (!current()) return;
     final speech = _speech;
     try {
-      await speech?.stop();
-      if (request != _speechRequest || !_enabled || _disposed) return;
-      // Await native completion so Mandarin instructions and English examples
-      // do not interrupt one another. A new request cancels remaining lines.
-      await speech?.awaitSpeakCompletion(true);
+      await _nativeCommand(() async {
+        if (current()) await _stopNativeSpeech();
+      });
       for (final line in lines) {
-        if (request != _speechRequest || !_enabled || _disposed) return;
+        if (!current()) return;
         if (line.text.trim().isEmpty) continue;
-        if (speech != null) {
-          await _applyVoiceProfile(speech, voice, language: line.language);
+        Future<void>? finished;
+        await _nativeCommand(() async {
+          if (!current()) return;
+          if (speech != null) {
+            await _applyVoiceProfile(speech, voice, language: line.language);
+          }
+          if (!current()) return;
+          lastSpokenText = line.text;
+          lastVoice = voice;
+          lastLanguage = line.language;
+          if (speech != null) {
+            // Own completion/cancellation in Dart: macOS flutter_tts leaves
+            // awaitSpeakCompletion's native result unresolved after a stop.
+            await speech.awaitSpeakCompletion(false);
+            _utterance = Completer<void>();
+            finished = _utterance!.future;
+            await speech.speak(line.text);
+          }
+        });
+        if (finished != null) {
+          final timeout = Duration(
+            milliseconds: (line.text.length * 350 + 6000).clamp(8000, 45000),
+          );
+          await finished!.timeout(
+            timeout,
+            onTimeout: () async {
+              if (current()) await _nativeCommand(_stopNativeSpeech);
+            },
+          );
         }
-        if (request != _speechRequest || !_enabled || _disposed) return;
-        lastSpokenText = line.text;
-        lastVoice = voice;
-        lastLanguage = line.language;
-        await speech?.speak(line.text);
       }
     } catch (_) {
+      _finishUtterance();
       // Unavailable system voices never prevent touch interaction.
     }
   }
 
   Future<void> play(GameSound sound) async {
+    final request = ++_effectRequest;
     await _ready;
-    if (!_enabled || _disposed) return;
+    if (!_enabled || _disposed || request != _effectRequest) return;
     lastSound = sound;
     final effects = _effects;
     final file = _soundFiles[sound];
@@ -205,12 +302,21 @@ class GameAudioController extends ChangeNotifier {
     await speak(text, voice: voice);
   }
 
+  Future<void> stopEffects() async {
+    _effectRequest++;
+    try {
+      await _effects?.stop();
+    } catch (_) {
+      /* Output can detach during navigation. */
+    }
+  }
+
   Future<void> stopSpeech() async {
     _speechRequest++;
     try {
-      await _speech?.stop();
+      await _nativeCommand(_stopNativeSpeech);
     } catch (_) {
-      // The speech engine may already have been detached.
+      _finishUtterance();
     }
   }
 
