@@ -358,6 +358,14 @@ flutter devices
 flutter run -d <device-id>
 ```
 
+仓库不提交 Unity 生成的 iOS 工程，因此普通 iOS 构建会使用内置的 2D 怪兽战斗。需要启用 Unity 3D 战斗时，先在 Unity Hub 为 `6000.3.22f1` 安装 iOS Build Support，再执行：
+
+```bash
+./scripts/export_unity_ios.sh
+flutter run --release -d <device-id> \
+  --dart-define=COLORHUG_ENABLE_UNITY=true
+```
+
 ## ✅ 验证
 
 ```bash

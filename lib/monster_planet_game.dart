@@ -17,6 +17,13 @@ import 'island_progress.dart';
 import 'monster_planet_3d_screen.dart';
 import 'ultra_assets.dart';
 
+// The Unity export is generated locally and is intentionally not checked in.
+// Keep regular iOS builds usable until that native framework has been exported.
+const _unityRuntimeAvailable = bool.fromEnvironment(
+  'COLORHUG_ENABLE_UNITY',
+  defaultValue: false,
+);
+
 @immutable
 class UltraFighter {
   const UltraFighter({
@@ -127,7 +134,8 @@ class _MonsterPlanetSelectScreenState extends State<MonsterPlanetSelectScreen> {
 
   void _start() {
     unawaited(widget.audio.play(GameSound.correct));
-    final destination = defaultTargetPlatform == TargetPlatform.iOS
+    final destination =
+        defaultTargetPlatform == TargetPlatform.iOS && _unityRuntimeAvailable
         ? MonsterPlanet3DGameScreen(
             progress: widget.progress,
             audio: widget.audio,
