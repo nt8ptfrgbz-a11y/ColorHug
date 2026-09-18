@@ -1,0 +1,114 @@
+[
+  {
+    "name": "bell.wav",
+    "seconds": 1.1,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.466,
+    "rms": 0.109
+  },
+  {
+    "name": "boing.wav",
+    "seconds": 0.55,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.494,
+    "rms": 0.123
+  },
+  {
+    "name": "bubble.wav",
+    "seconds": 0.48,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.385,
+    "rms": 0.111
+  },
+  {
+    "name": "celebrate.wav",
+    "seconds": 3.0,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.236,
+    "rms": 0.049
+  },
+  {
+    "name": "chime.wav",
+    "seconds": 1.0,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.522,
+    "rms": 0.103
+  },
+  {
+    "name": "crunch.wav",
+    "seconds": 0.36,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.373,
+    "rms": 0.055
+  },
+  {
+    "name": "giggle.wav",
+    "seconds": 0.72,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.51,
+    "rms": 0.097
+  },
+  {
+    "name": "marimba.wav",
+    "seconds": 0.65,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.374,
+    "rms": 0.104
+  },
+  {
+    "name": "pick.wav",
+    "seconds": 0.19,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.4,
+    "rms": 0.124
+  },
+  {
+    "name": "pluck.wav",
+    "seconds": 0.7,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.454,
+    "rms": 0.094
+  },
+  {
+    "name": "pop.wav",
+    "seconds": 0.25,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.389,
+    "rms": 0.097
+  },
+  {
+    "name": "slurp.wav",
+    "seconds": 0.63,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.436,
+    "rms": 0.111
+  },
+  {
+    "name": "splash.wav",
+    "seconds": 0.65,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.275,
+    "rms": 0.053
+  },
+  {
+    "name": "town_loop.wav",
+    "seconds": 21.818,
+    "channels": 2,
+    "rate": 22050,
+    "peak": 0.209,
+    "rms": 0.036
+  }
+]

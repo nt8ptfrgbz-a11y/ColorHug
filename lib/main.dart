@@ -5,6 +5,7 @@ import 'color_lab_screen.dart';
 import 'game_audio.dart';
 import 'island_progress.dart';
 import 'rainbow_island_screen.dart';
+import 'silly_town/town_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,14 +14,20 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-  runApp(const ColorHugApp());
+  runApp(const ColorHugApp(startInTown: true));
 }
 
 class ColorHugApp extends StatefulWidget {
-  const ColorHugApp({super.key, this.progress, this.audio});
+  const ColorHugApp({
+    super.key,
+    this.progress,
+    this.audio,
+    this.startInTown = false,
+  });
 
   final IslandProgress? progress;
   final GameAudioController? audio;
+  final bool startInTown;
 
   @override
   State<ColorHugApp> createState() => _ColorHugAppState();
@@ -63,10 +70,11 @@ class _ColorHugAppState extends State<ColorHugApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '颜色抱抱',
+      title: widget.startInTown ? '小怪兽的胡闹小镇' : '颜色抱抱',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        splashFactory: InkRipple.splashFactory,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF7957D5),
           brightness: Brightness.light,
@@ -78,11 +86,26 @@ class _ColorHugAppState extends State<ColorHugApp> {
         ],
       ),
       home: Builder(
-        builder: (context) => ColorLabScreen(
-          progress: _progress,
-          audio: _audio,
-          onOpenIsland: () => _openIsland(context),
-        ),
+        builder: (context) => widget.startInTown
+            ? TownHomeScreen(
+                audio: _audio,
+                nativeAudio: _ownsAudio,
+                onOpenClassic: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (context) => ColorLabScreen(
+                      progress: _progress,
+                      audio: _audio,
+                      onBack: () => Navigator.of(context).pop(),
+                      onOpenIsland: () => _openIsland(context),
+                    ),
+                  ),
+                ),
+              )
+            : ColorLabScreen(
+                progress: _progress,
+                audio: _audio,
+                onOpenIsland: () => _openIsland(context),
+              ),
       ),
     );
   }

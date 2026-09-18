@@ -16,11 +16,13 @@ class ColorLabScreen extends StatefulWidget {
     required this.audio,
     this.progress,
     this.onOpenIsland,
+    this.onBack,
   });
 
   final GameAudioController audio;
   final IslandProgress? progress;
   final VoidCallback? onOpenIsland;
+  final VoidCallback? onBack;
 
   @override
   State<ColorLabScreen> createState() => _ColorLabScreenState();
@@ -774,7 +776,14 @@ class _ColorLabScreenState extends State<ColorLabScreen>
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Text('🌈', style: TextStyle(fontSize: compact ? 23 : 30)),
+          child: widget.onBack == null
+              ? Text('🌈', style: TextStyle(fontSize: compact ? 23 : 30))
+              : IconButton(
+                  key: const ValueKey('lab-back-to-town'),
+                  tooltip: '回到胡闹小镇',
+                  onPressed: widget.onBack,
+                  icon: Icon(Icons.home_rounded, color: textColor),
+                ),
         ),
         SizedBox(width: compact ? 8 : 12),
         if (!compact || MediaQuery.sizeOf(context).width > 480)
