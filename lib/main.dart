@@ -6,6 +6,7 @@ import 'game_audio.dart';
 import 'island_progress.dart';
 import 'rainbow_island_screen.dart';
 import 'silly_town/town_screen.dart';
+import 'dress_up/dress_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,7 +15,7 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-  runApp(const ColorHugApp(startInTown: true));
+  runApp(const ColorHugApp(startInDressUp: true));
 }
 
 class ColorHugApp extends StatefulWidget {
@@ -23,11 +24,13 @@ class ColorHugApp extends StatefulWidget {
     this.progress,
     this.audio,
     this.startInTown = false,
+    this.startInDressUp = false,
   });
 
   final IslandProgress? progress;
   final GameAudioController? audio;
   final bool startInTown;
+  final bool startInDressUp;
 
   @override
   State<ColorHugApp> createState() => _ColorHugAppState();
@@ -70,7 +73,11 @@ class _ColorHugAppState extends State<ColorHugApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: widget.startInTown ? '小怪兽的胡闹小镇' : '颜色抱抱',
+      title: widget.startInDressUp
+          ? '绒绒衣橱'
+          : widget.startInTown
+          ? '小怪兽的胡闹小镇'
+          : '颜色抱抱',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -86,7 +93,30 @@ class _ColorHugAppState extends State<ColorHugApp> {
         ],
       ),
       home: Builder(
-        builder: (context) => widget.startInTown
+        builder: (context) => widget.startInDressUp
+            ? DressUpScreen(
+                audio: _audio,
+                onOpenTown: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (context) => TownHomeScreen(
+                      audio: _audio,
+                      nativeAudio: _ownsAudio,
+                      onBack: () => Navigator.of(context).pop(),
+                      onOpenClassic: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (context) => ColorLabScreen(
+                            progress: _progress,
+                            audio: _audio,
+                            onBack: () => Navigator.of(context).pop(),
+                            onOpenIsland: () => _openIsland(context),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : widget.startInTown
             ? TownHomeScreen(
                 audio: _audio,
                 nativeAudio: _ownsAudio,

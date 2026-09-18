@@ -37,7 +37,13 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  unity_linked = File.read(File.join(__dir__, 'Runner.xcodeproj/project.pbxproj')).include?('UnityFramework.framework in Frameworks')
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    if target.name == 'flutter_embed_unity_2022_3_ios'
+      target.build_configurations.each do |config|
+        config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = unity_linked ? '$(inherited) COLORHUG_UNITY_RUNTIME' : '$(inherited)'
+      end
+    end
   end
 end

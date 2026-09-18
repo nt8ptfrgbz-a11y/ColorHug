@@ -12,5 +12,8 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "DressUp3D") {
+      registrar.register(DressPlatformFactory(messenger: registrar.messenger()), withId: "colorhug/dress3d")
+    }
   }
 }

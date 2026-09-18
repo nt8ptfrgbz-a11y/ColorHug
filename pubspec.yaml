@@ -41,6 +41,12 @@ dependencies:
   flame_audio: ^2.12.2
   flutter_embed_unity: ^2.0.0
 
+# Keep the existing optional Unity game without requiring a Unity export to
+# build the native SceneKit wardrobe (or an iOS Simulator build).
+dependency_overrides:
+  flutter_embed_unity_2022_3_ios:
+    path: third_party/flutter_embed_unity_2022_3_ios
+
 dev_dependencies:
   flutter_driver:
     sdk: flutter
@@ -77,6 +83,7 @@ flutter:
     - assets/ultra/
     - assets/expedition/
     - assets/silly_town/audio/
+    - assets/dress_up/audio/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

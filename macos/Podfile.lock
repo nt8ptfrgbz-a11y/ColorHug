@@ -28,9 +28,9 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   audioplayers_darwin: 835ced6edd4c9fc8ebb0a7cc9e294a91d99917d5
   flutter_tts: ae915565cc6948444b513acc8ee021993281e027
-  FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
 
 PODFILE CHECKSUM: 1e95c36afbfd1cb6423ceca4de7a8e1b256fb6ac
 
-COCOAPODS: 1.17.0
+COCOAPODS: 1.16.2

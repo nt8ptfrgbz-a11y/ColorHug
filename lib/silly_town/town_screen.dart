@@ -29,11 +29,13 @@ class TownHomeScreen extends StatefulWidget {
     required this.audio,
     this.progress,
     this.onOpenClassic,
+    this.onBack,
     this.nativeAudio = true,
   });
   final GameAudioController audio;
   final TownProgress? progress;
   final Future<void> Function()? onOpenClassic;
+  final VoidCallback? onBack;
   final bool nativeAudio;
   @override
   State<TownHomeScreen> createState() => _TownHomeScreenState();
@@ -406,6 +408,15 @@ class _TownHomeScreenState extends State<TownHomeScreen>
                               ],
                             ),
                           ),
+                          if (widget.onBack != null) ...[
+                            TownIconButton(
+                              key: const ValueKey('town-back-to-wardrobe'),
+                              label: '返回绒绒衣橱',
+                              icon: Icons.checkroom_rounded,
+                              onTap: widget.onBack!,
+                            ),
+                            const SizedBox(width: 7),
+                          ],
                           TownIconButton(
                             key: const ValueKey('town-album'),
                             label: '小耳朵收藏册',
