@@ -33,12 +33,14 @@ class DressUpScreen extends StatefulWidget {
     this.stageBuilder,
     this.onOpenTown,
     this.nativeController,
+    this.onBack,
   });
   final GameAudioController audio;
   final DressModel? model;
   final DressStageBuilder? stageBuilder;
   final Future<void> Function()? onOpenTown;
   final DressNativeController? nativeController;
+  final VoidCallback? onBack;
   @override
   State<DressUpScreen> createState() => _DressUpScreenState();
 }
@@ -661,6 +663,15 @@ class _DressUpScreenState extends State<DressUpScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('陪伴设置', style: _type(23)),
+                  if (widget.onBack != null && widget.onOpenTown != null)
+                    _SoftButton(
+                      label: '小镇 · 更多游戏',
+                      icon: Icons.grid_view_rounded,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _moreGames();
+                      },
+                    ),
                   const SizedBox(height: 10),
                   SwitchListTile(
                     title: Text('语音与声音', style: _type(16)),
@@ -737,9 +748,11 @@ class _DressUpScreenState extends State<DressUpScreen>
                       if (widget.onOpenTown != null ||
                           Navigator.canPop(context)) ...[
                         _RoundButton(
-                          label: '更多游戏',
-                          icon: Icons.grid_view_rounded,
-                          onTap: _moreGames,
+                          label: widget.onBack != null ? '回到种子花房' : '更多游戏',
+                          icon: widget.onBack != null
+                              ? Icons.arrow_back_rounded
+                              : Icons.grid_view_rounded,
+                          onTap: widget.onBack ?? _moreGames,
                           size: compact ? 42 : 48,
                         ),
                         const SizedBox(width: 12),

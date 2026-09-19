@@ -84,6 +84,8 @@ flutter:
     - assets/expedition/
     - assets/silly_town/audio/
     - assets/dress_up/audio/
+    - assets/seed_lab/audio/
+    - assets/shanhai/audio/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -7,6 +7,8 @@ import 'island_progress.dart';
 import 'rainbow_island_screen.dart';
 import 'silly_town/town_screen.dart';
 import 'dress_up/dress_screen.dart';
+import 'seed_lab/seed_screen.dart';
+import 'shanhai/shanhai_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +17,7 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-  runApp(const ColorHugApp(startInDressUp: true));
+  runApp(const ColorHugApp(startInShanhai: true));
 }
 
 class ColorHugApp extends StatefulWidget {
@@ -25,12 +27,16 @@ class ColorHugApp extends StatefulWidget {
     this.audio,
     this.startInTown = false,
     this.startInDressUp = false,
+    this.startInSeedLab = false,
+    this.startInShanhai = false,
   });
 
   final IslandProgress? progress;
   final GameAudioController? audio;
   final bool startInTown;
   final bool startInDressUp;
+  final bool startInSeedLab;
+  final bool startInShanhai;
 
   @override
   State<ColorHugApp> createState() => _ColorHugAppState();
@@ -73,7 +79,11 @@ class _ColorHugAppState extends State<ColorHugApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: widget.startInDressUp
+      title: widget.startInShanhai
+          ? '山海唤灵师'
+          : widget.startInSeedLab
+          ? '奇怪种子实验室'
+          : widget.startInDressUp
           ? '绒绒衣橱'
           : widget.startInTown
           ? '小怪兽的胡闹小镇'
@@ -93,7 +103,84 @@ class _ColorHugAppState extends State<ColorHugApp> {
         ],
       ),
       home: Builder(
-        builder: (context) => widget.startInDressUp
+        builder: (context) => widget.startInShanhai
+            ? ShanhaiScreen(
+                audio: _audio,
+                nativeAudio: _ownsAudio,
+                onOpenGames: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (context) => SeedLabScreen(
+                      audio: _audio,
+                      nativeAudio: _ownsAudio,
+                      onBack: () => Navigator.of(context).pop(),
+                      onOpenWardrobe: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (context) => DressUpScreen(
+                            audio: _audio,
+                            onBack: () => Navigator.of(context).pop(),
+                            onOpenTown: () => Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (context) => TownHomeScreen(
+                                  audio: _audio,
+                                  nativeAudio: _ownsAudio,
+                                  onBack: () => Navigator.of(context).pop(),
+                                  onOpenClassic: () =>
+                                      Navigator.of(context).push<void>(
+                                        MaterialPageRoute(
+                                          builder: (context) => ColorLabScreen(
+                                            progress: _progress,
+                                            audio: _audio,
+                                            onBack: () =>
+                                                Navigator.of(context).pop(),
+                                            onOpenIsland: () =>
+                                                _openIsland(context),
+                                          ),
+                                        ),
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : widget.startInSeedLab
+            ? SeedLabScreen(
+                audio: _audio,
+                nativeAudio: _ownsAudio,
+                onOpenWardrobe: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (context) => DressUpScreen(
+                      audio: _audio,
+                      onBack: () => Navigator.of(context).pop(),
+                      onOpenTown: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (context) => TownHomeScreen(
+                            audio: _audio,
+                            nativeAudio: _ownsAudio,
+                            onBack: () => Navigator.of(context).pop(),
+                            onOpenClassic: () =>
+                                Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    builder: (context) => ColorLabScreen(
+                                      progress: _progress,
+                                      audio: _audio,
+                                      onBack: () => Navigator.of(context).pop(),
+                                      onOpenIsland: () => _openIsland(context),
+                                    ),
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : widget.startInDressUp
             ? DressUpScreen(
                 audio: _audio,
                 onOpenTown: () => Navigator.of(context).push<void>(

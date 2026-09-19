@@ -20,6 +20,8 @@
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		A24BA3522341E33B2EB11C04 /* DressPlatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 459648B8564883B389FD1626 /* DressPlatformView.swift */; };
 		A5D5299624FA2B5317BCA604 /* DressScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF4D685143C52DC89802D252 /* DressScene.swift */; };
+		5A4A48000000000000000010 /* ShanhaiScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4A48000000000000000000 /* ShanhaiScene.swift */; };
+		5A4A48000000000000000011 /* ShanhaiPlatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4A48000000000000000001 /* ShanhaiPlatformView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +75,8 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DF4D685143C52DC89802D252 /* DressScene.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DressScene.swift; path = ../native/dress_up/DressScene.swift; sourceTree = SOURCE_ROOT; };
 		F275C791AA3E54380A38ADB3 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
+		5A4A48000000000000000000 /* ShanhaiScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShanhaiScene.swift; path = ../native/shanhai/ShanhaiScene.swift; sourceTree = SOURCE_ROOT; };
+		5A4A48000000000000000001 /* ShanhaiPlatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShanhaiPlatformView.swift; path = ../native/shanhai/ShanhaiPlatformView.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -181,6 +185,8 @@
 			isa = PBXGroup;
 			children = (
 				DF4D685143C52DC89802D252 /* DressScene.swift */,
+				5A4A48000000000000000001 /* ShanhaiPlatformView.swift */,
+				5A4A48000000000000000000 /* ShanhaiScene.swift */,
 				459648B8564883B389FD1626 /* DressPlatformView.swift */,
 			);
 			name = DressUp3D;
@@ -408,6 +414,8 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				A5D5299624FA2B5317BCA604 /* DressScene.swift in Sources */,
+				5A4A48000000000000000011 /* ShanhaiPlatformView.swift in Sources */,
+				5A4A48000000000000000010 /* ShanhaiScene.swift in Sources */,
 				A24BA3522341E33B2EB11C04 /* DressPlatformView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
