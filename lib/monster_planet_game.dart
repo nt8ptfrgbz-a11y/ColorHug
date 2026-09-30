@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 import 'monster_planet_3d_screen.dart';
 import 'ultra_assets.dart';
@@ -184,7 +185,7 @@ class _MonsterPlanetSelectScreenState extends State<MonsterPlanetSelectScreen> {
                       IconButton.filledTonal(
                         key: const ValueKey('monster-select-back'),
                         onPressed: () => Navigator.of(context).pop(),
-                        tooltip: '返回奥特曼训练营',
+                        tooltip: GameEntryNavigation.label(context, '返回奥特曼训练营'),
                         icon: const Icon(Icons.arrow_back_rounded),
                       ),
                       const SizedBox(width: 10),

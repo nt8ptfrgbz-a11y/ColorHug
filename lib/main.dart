@@ -9,6 +9,7 @@ import 'silly_town/town_screen.dart';
 import 'dress_up/dress_screen.dart';
 import 'seed_lab/seed_screen.dart';
 import 'shanhai/shanhai_screen.dart';
+import 'game_catalog_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +18,7 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
-  runApp(const ColorHugApp(startInShanhai: true));
+  runApp(const ColorHugApp());
 }
 
 class ColorHugApp extends StatefulWidget {
@@ -29,6 +30,7 @@ class ColorHugApp extends StatefulWidget {
     this.startInDressUp = false,
     this.startInSeedLab = false,
     this.startInShanhai = false,
+    this.startInColorLab = false,
   });
 
   final IslandProgress? progress;
@@ -37,6 +39,7 @@ class ColorHugApp extends StatefulWidget {
   final bool startInDressUp;
   final bool startInSeedLab;
   final bool startInShanhai;
+  final bool startInColorLab;
 
   @override
   State<ColorHugApp> createState() => _ColorHugAppState();
@@ -218,10 +221,16 @@ class _ColorHugAppState extends State<ColorHugApp> {
                   ),
                 ),
               )
-            : ColorLabScreen(
+            : widget.startInColorLab
+            ? ColorLabScreen(
                 progress: _progress,
                 audio: _audio,
                 onOpenIsland: () => _openIsland(context),
+              )
+            : GameCatalogScreen(
+                progress: _progress,
+                audio: _audio,
+                nativeAudio: _ownsAudio,
               ),
       ),
     );

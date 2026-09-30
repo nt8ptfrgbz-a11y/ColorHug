@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 
 class ColorGalleryScreen extends StatelessWidget {
@@ -123,7 +124,7 @@ class ColorGalleryScreen extends StatelessWidget {
                       IconButton.filledTonal(
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.arrow_back_rounded),
-                        tooltip: '返回彩虹小岛',
+                        tooltip: GameEntryNavigation.label(context, '返回彩虹小岛'),
                       ),
                       const SizedBox(width: 9),
                       const Expanded(

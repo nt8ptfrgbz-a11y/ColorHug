@@ -6,5 +6,5 @@ import 'package:color_hug/island_progress.dart';
 
 void main() {
   enableFlutterDriverExtension();
-  runApp(ColorHugApp(progress: IslandProgress()));
+  runApp(ColorHugApp(startInColorLab: true, progress: IslandProgress()));
 }

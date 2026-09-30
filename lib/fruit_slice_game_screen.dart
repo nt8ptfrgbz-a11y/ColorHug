@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 
 @immutable
@@ -849,7 +850,7 @@ class _FruitGameHeader extends StatelessWidget {
       children: [
         IconButton.filled(
           onPressed: () => Navigator.of(context).pop(),
-          tooltip: '返回奥特曼训练营',
+          tooltip: GameEntryNavigation.label(context, '返回奥特曼训练营'),
           style: IconButton.styleFrom(
             backgroundColor: const Color(0xD9FFFFFF),
             foregroundColor: const Color(0xFF24528D),

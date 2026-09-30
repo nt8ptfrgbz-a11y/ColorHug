@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'color_challenges.dart';
 import 'color_mixer.dart';
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 
 class ColorLabScreen extends StatefulWidget {
@@ -780,7 +781,7 @@ class _ColorLabScreenState extends State<ColorLabScreen>
               ? Text('🌈', style: TextStyle(fontSize: compact ? 23 : 30))
               : IconButton(
                   key: const ValueKey('lab-back-to-town'),
-                  tooltip: '回到胡闹小镇',
+                  tooltip: GameEntryNavigation.label(context, '回到胡闹小镇'),
                   onPressed: widget.onBack,
                   icon: Icon(Icons.home_rounded, color: textColor),
                 ),

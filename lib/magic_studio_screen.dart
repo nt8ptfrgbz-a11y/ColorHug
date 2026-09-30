@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 
 @immutable
@@ -165,7 +166,7 @@ class _MagicStudioScreenState extends State<MagicStudioScreen> {
                   IconButton.filledTonal(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back_rounded),
-                    tooltip: '返回彩虹小岛',
+                    tooltip: GameEntryNavigation.label(context, '返回彩虹小岛'),
                   ),
                   const SizedBox(width: 9),
                   const Expanded(

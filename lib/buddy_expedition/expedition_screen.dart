@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import '../game_audio.dart';
+import '../game_entry_navigation.dart';
 import '../island_progress.dart';
 import 'expedition_assets.dart';
 import 'expedition_controller.dart';
@@ -701,7 +702,7 @@ class _ExpeditionState extends State<ExpeditionScreen>
                   children: [
                     _round(
                       Icons.arrow_back_rounded,
-                      '返回小家',
+                      GameEntryNavigation.label(context, '返回小家'),
                       () => Navigator.maybePop(context),
                       'expedition-back',
                     ),

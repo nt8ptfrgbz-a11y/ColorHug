@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import '../game_audio.dart';
+import '../game_entry_navigation.dart';
 import 'town_art.dart';
 import 'town_audio.dart';
 import 'town_catalog.dart';
@@ -411,8 +412,11 @@ class _TownHomeScreenState extends State<TownHomeScreen>
                           if (widget.onBack != null) ...[
                             TownIconButton(
                               key: const ValueKey('town-back-to-wardrobe'),
-                              label: '返回绒绒衣橱',
-                              icon: Icons.checkroom_rounded,
+                              label: GameEntryNavigation.label(
+                                context,
+                                '返回绒绒衣橱',
+                              ),
+                              icon: Icons.arrow_back_rounded,
                               onTap: widget.onBack!,
                             ),
                             const SizedBox(width: 7),

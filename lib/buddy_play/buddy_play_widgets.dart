@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import '../buddy_effects.dart';
 import '../buddy_widgets.dart';
 import '../game_audio.dart';
+import '../game_entry_navigation.dart';
 import '../island_progress.dart';
 import 'buddy_play_catalog.dart';
 import 'buddy_play_session.dart';
@@ -376,7 +377,10 @@ abstract class ToyState<W extends ToyScreen, M extends ToyModel>
                           key: const ValueKey('play-back'),
                           onPressed: () => Navigator.maybePop(context),
                           icon: const Icon(Icons.arrow_back_rounded),
-                          tooltip: '返回小伙伴乐园',
+                          tooltip: GameEntryNavigation.label(
+                            context,
+                            '返回小伙伴乐园',
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(

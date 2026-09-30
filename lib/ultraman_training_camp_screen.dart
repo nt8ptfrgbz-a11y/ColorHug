@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'fruit_slice_game_screen.dart';
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 import 'light_guardian_screen.dart';
 import 'ultra_assets.dart';
@@ -377,7 +378,7 @@ class _TrainingHeader extends StatelessWidget {
       children: [
         IconButton.filledTonal(
           onPressed: () => Navigator.of(context).pop(),
-          tooltip: backTooltip,
+          tooltip: GameEntryNavigation.label(context, backTooltip),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         const SizedBox(width: 9),

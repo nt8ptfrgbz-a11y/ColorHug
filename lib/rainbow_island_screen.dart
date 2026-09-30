@@ -7,6 +7,7 @@ import 'color_challenges.dart';
 import 'color_detective_screen.dart';
 import 'color_gallery_screen.dart';
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 import 'magic_studio_screen.dart';
 import 'rainbow_repair_screen.dart';
@@ -239,7 +240,7 @@ class _IslandHeader extends StatelessWidget {
         IconButton.filledTonal(
           key: const ValueKey('island-back'),
           onPressed: () => Navigator.of(context).pop(),
-          tooltip: '返回颜色实验室',
+          tooltip: GameEntryNavigation.label(context, '返回颜色实验室'),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         const SizedBox(width: 9),

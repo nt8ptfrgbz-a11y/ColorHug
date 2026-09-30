@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'game_entry_navigation.dart';
 
 import 'buddy_models.dart';
 import 'buddy_effects.dart';
@@ -68,7 +69,10 @@ class _BuddyGameShellState extends State<BuddyGameShell> {
                       children: [
                         IconButton.filledTonal(
                           onPressed: () => Navigator.of(context).pop(),
-                          tooltip: widget.backLabel,
+                          tooltip: GameEntryNavigation.label(
+                            context,
+                            widget.backLabel,
+                          ),
                           icon: const Icon(Icons.arrow_back_rounded),
                         ),
                         const SizedBox(width: 10),

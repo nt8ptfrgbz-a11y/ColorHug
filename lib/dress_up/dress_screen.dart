@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../game_audio.dart';
+import '../game_entry_navigation.dart';
 import 'dress_art.dart';
 import 'dress_catalog.dart';
 import 'dress_model.dart';
@@ -748,7 +749,9 @@ class _DressUpScreenState extends State<DressUpScreen>
                       if (widget.onOpenTown != null ||
                           Navigator.canPop(context)) ...[
                         _RoundButton(
-                          label: widget.onBack != null ? '回到种子花房' : '更多游戏',
+                          label: widget.onBack != null
+                              ? GameEntryNavigation.label(context, '回到种子花房')
+                              : '更多游戏',
                           icon: widget.onBack != null
                               ? Icons.arrow_back_rounded
                               : Icons.grid_view_rounded,

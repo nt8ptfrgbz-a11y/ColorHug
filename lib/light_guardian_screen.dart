@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'color_challenges.dart';
 import 'color_mixer.dart';
 import 'game_audio.dart';
+import 'game_entry_navigation.dart';
 import 'island_progress.dart';
 import 'ultra_assets.dart';
 
@@ -284,7 +285,7 @@ class _GuardianHeader extends StatelessWidget {
       children: [
         IconButton.filledTonal(
           onPressed: () => Navigator.of(context).pop(),
-          tooltip: '返回奥特曼训练营',
+          tooltip: GameEntryNavigation.label(context, '返回奥特曼训练营'),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         const SizedBox(width: 9),

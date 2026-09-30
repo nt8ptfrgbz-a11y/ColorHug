@@ -113,5 +113,5 @@ void main() {
     }
     return null;
   });
-  runApp(ColorHugApp(progress: IslandProgress()));
+  runApp(ColorHugApp(startInColorLab: true, progress: IslandProgress()));
 }

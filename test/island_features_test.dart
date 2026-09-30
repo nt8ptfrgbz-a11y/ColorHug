@@ -15,6 +15,7 @@ Future<void> _pumpDesktopApp(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     ColorHugApp(
+      startInColorLab: true,
       progress: IslandProgress(),
       audio: audio ?? GameAudioController.silent(),
     ),
@@ -44,6 +45,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       ColorHugApp(
+        startInColorLab: true,
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),
@@ -78,6 +80,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       ColorHugApp(
+        startInColorLab: true,
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),
@@ -145,7 +148,11 @@ void main() {
   testWidgets('色彩侦探会朗读线索并用声音回应答案', (tester) async {
     final audio = GameAudioController.silent();
     await tester.pumpWidget(
-      ColorHugApp(progress: IslandProgress(), audio: audio),
+      ColorHugApp(
+        startInColorLab: true,
+        progress: IslandProgress(),
+        audio: audio,
+      ),
     );
     await tester.pump(const Duration(milliseconds: 80));
     await _openIsland(tester);
@@ -203,7 +210,9 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final progress = IslandProgress();
     final audio = GameAudioController.silent();
-    await tester.pumpWidget(ColorHugApp(progress: progress, audio: audio));
+    await tester.pumpWidget(
+      ColorHugApp(startInColorLab: true, progress: progress, audio: audio),
+    );
     await tester.pump(const Duration(milliseconds: 80));
     await _openIsland(tester);
     await tester.tap(find.byKey(const ValueKey('activity-repair')));
@@ -288,7 +297,11 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
-      ColorHugApp(progress: IslandProgress(), audio: audio),
+      ColorHugApp(
+        startInColorLab: true,
+        progress: IslandProgress(),
+        audio: audio,
+      ),
     );
     await tester.pump(const Duration(milliseconds: 80));
     await _openIsland(tester);

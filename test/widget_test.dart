@@ -13,6 +13,7 @@ void main() {
 
     await tester.pumpWidget(
       ColorHugApp(
+        startInColorLab: true,
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),
@@ -38,6 +39,7 @@ void main() {
 
     await tester.pumpWidget(
       ColorHugApp(
+        startInColorLab: true,
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),
@@ -64,6 +66,7 @@ void main() {
 
     await tester.pumpWidget(
       ColorHugApp(
+        startInColorLab: true,
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),
@@ -92,6 +95,7 @@ void main() {
 
     await tester.pumpWidget(
       ColorHugApp(
+        startInColorLab: true,
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),
@@ -134,6 +138,7 @@ void main() {
 
     await tester.pumpWidget(
       ColorHugApp(
+        startInColorLab: true,
         progress: IslandProgress(),
         audio: GameAudioController.silent(),
       ),

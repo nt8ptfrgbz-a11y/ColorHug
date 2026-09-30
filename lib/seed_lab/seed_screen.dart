@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../game_audio.dart';
+import '../game_entry_navigation.dart';
 import 'seed_art.dart';
 import 'seed_model.dart';
 import 'seed_sound.dart';
@@ -362,7 +363,7 @@ class _SeedLabScreenState extends State<SeedLabScreen>
       if (widget.onBack != null)
         IconButton(
           onPressed: widget.onBack,
-          tooltip: '返回山海',
+          tooltip: GameEntryNavigation.label(context, '返回山海'),
           icon: const Icon(Icons.arrow_back_rounded, color: labInk),
         )
       else

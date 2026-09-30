@@ -145,7 +145,10 @@ void main() {
   testWidgets('从彩虹小岛进入小伙伴乐园，再打开三个游戏并返回', (tester) async {
     final progress = IslandProgress();
     final audio = GameAudioController.silent();
-    await pumpGame(tester, ColorHugApp(progress: progress, audio: audio));
+    await pumpGame(
+      tester,
+      ColorHugApp(startInColorLab: true, progress: progress, audio: audio),
+    );
     await tapKey(tester, 'island-map');
     await tapKey(tester, 'activity-buddy');
     for (final game in ['juice', 'bath', 'hide']) {

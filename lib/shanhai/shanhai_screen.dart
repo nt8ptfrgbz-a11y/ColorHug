@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import '../game_audio.dart';
+import '../game_entry_navigation.dart';
 import 'shanhai_model.dart';
 import 'shanhai_native.dart';
 import 'shanhai_sound.dart';
@@ -35,6 +36,7 @@ class ShanhaiScreen extends StatefulWidget {
     this.stageBuilder,
     this.nativeController,
     this.onOpenGames,
+    this.onBack,
     this.nativeAudio = true,
   });
   final GameAudioController audio;
@@ -42,6 +44,7 @@ class ShanhaiScreen extends StatefulWidget {
   final ShanhaiStageBuilder? stageBuilder;
   final ShanhaiNativeController? nativeController;
   final Future<void> Function()? onOpenGames;
+  final VoidCallback? onBack;
   final bool nativeAudio;
   @override
   State<ShanhaiScreen> createState() => _ShanhaiScreenState();
@@ -453,15 +456,23 @@ class _ShanhaiScreenState extends State<ShanhaiScreen>
     padding: EdgeInsets.symmetric(horizontal: wide ? 28 : 16),
     child: Row(
       children: [
-        Container(
-          width: compact ? 37 : 44,
-          height: compact ? 37 : 44,
-          decoration: BoxDecoration(
-            border: Border.all(color: shanGold.withValues(alpha: .6)),
-            borderRadius: BorderRadius.circular(12),
+        if (widget.onBack != null)
+          IconButton(
+            key: const ValueKey('shanhai-back-to-catalog'),
+            onPressed: widget.onBack,
+            tooltip: '返回游戏目录',
+            icon: const Icon(Icons.arrow_back_rounded, color: shanGold),
+          )
+        else
+          Container(
+            width: compact ? 37 : 44,
+            height: compact ? 37 : 44,
+            decoration: BoxDecoration(
+              border: Border.all(color: shanGold.withValues(alpha: .6)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const CustomPaint(painter: _SigilPainter(color: shanGold)),
           ),
-          child: const CustomPaint(painter: _SigilPainter(color: shanGold)),
-        ),
         const SizedBox(width: 13),
         Expanded(
           child: Column(
@@ -539,7 +550,10 @@ class _ShanhaiScreenState extends State<ShanhaiScreen>
             if (widget.onOpenGames != null)
               PopupMenuItem(
                 value: 'games',
-                child: Text('种子花房 · 更多游戏', style: _text(13)),
+                child: Text(
+                  GameEntryNavigation.label(context, '种子花房 · 更多游戏'),
+                  style: _text(13),
+                ),
               ),
           ],
         ),

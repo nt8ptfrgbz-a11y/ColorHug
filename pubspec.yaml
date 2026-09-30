@@ -86,6 +86,41 @@ flutter:
     - assets/dress_up/audio/
     - assets/seed_lab/audio/
     - assets/shanhai/audio/
+    - docs/shanhai/ui-companion-844.png
+    - docs/seed_lab/lab-844.png
+    - docs/dress_up/garden.png
+    - docs/silly_town/home-1100.png
+    - docs/images/expedition-home-844.png
+    - docs/images/color-hug-monster-select.png
+    - docs/images/color-hug-studio.png
+    - docs/images/color-hug-home.png
+    - docs/images/color-hug-island.png
+    - docs/images/color-hug-detective.png
+    - docs/images/color-hug-repair.png
+    - docs/images/color-hug-gallery.png
+    - docs/images/buddy-home.png
+    - docs/images/play-rolling-phone.png
+    - docs/images/play-salon-phone.png
+    - docs/images/play-water-phone.png
+    - docs/images/play-delivery-phone.png
+    - docs/images/play-squishy-phone.png
+    - docs/images/play-soundTrain-phone.png
+    - docs/images/play-shadows-phone.png
+    - docs/images/play-tinyWorld-phone.png
+    - docs/images/buddy-juice.png
+    - docs/images/buddy-bath.png
+    - docs/images/buddy-hide.png
+    - docs/images/buddy-weather.png
+    - docs/images/buddy-dinosaur.png
+    - docs/images/buddy-building.png
+    - docs/images/buddy-silly.png
+    - docs/images/buddy-theater.png
+    - docs/images/buddy-fireworks.png
+    - docs/images/color-hug-ultra-camp.png
+    - docs/images/color-hug-ultra-radar.png
+    - docs/images/color-hug-ultra-beam.png
+    - docs/images/color-hug-ultra-rescue.png
+    - docs/images/color-hug-guardian.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
